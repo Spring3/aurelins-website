@@ -1,5 +1,10 @@
 import React from 'react';
+import 'normalize.css';
+
+import Layout from '../layouts/MainLayout';
 
 export default () => (
-  <h1>Hello world!</h1>
+  <Layout>
+    <h1>Hello world!</h1>
+  </Layout>
 );
