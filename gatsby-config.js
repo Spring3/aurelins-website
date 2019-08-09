@@ -1,3 +1,22 @@
+let contentfulConfig;
+
+try {
+  contentfulConfig = require('./.contentful.json');
+} catch (_) {}
+
+contentfulConfig = {
+  spaceId: process.env.CONTENTFUL_SPACE_ID || contentfulConfig.spaceId,
+  accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || contentfulConfig.accessToken
+};
+
+const { spaceId, accessToken } = contentfulConfig;
+
+if (!spaceId || !accessToken) {
+  throw new Error(
+    'Contentful spaceId and the delivery token need to be provided.'
+  );
+}
+
 module.exports = {
   siteMetadata: {
     title: 'Aurelins website',
@@ -18,35 +37,6 @@ module.exports = {
       }
     },
     {
-      resolve: 'gatsby-source-filesystem',
-      options: {
-        name: 'pages',
-        path: `${__dirname}/src/pages`
-      }
-    },
-    {
-      resolve: 'gatsby-source-filesystem',
-      options: {
-        name: 'content',
-        path: `${__dirname}/src/content`
-      }
-    },
-    {
-      resolve: 'gatsby-transformer-remark',
-      options: {
-        plugins: [
-          {
-            resolve: 'gatsby-remark-images',
-            options: {
-              maxWidth: 1000,
-              linkImagesToOriginal: false
-            }
-          },
-          'gatsby-remark-copy-linked-files'
-        ],
-      }
-    },
-    {
       resolve: 'gatsby-plugin-nprogress',
       options: {
         showSpinner: false,
@@ -60,11 +50,12 @@ module.exports = {
       }
     },
     'gatsby-plugin-netlify-cache',
-    'gatsby-transformer-sharp',
-    'gatsby-plugin-sharp',
-    'gatsby-plugin-catch-links',
     'gatsby-plugin-offline',
     'gatsby-plugin-styled-components',
+    {
+      resolve: 'gatsby-source-contentful',
+      options: contentfulConfig
+    },
     'gatsby-plugin-netlify'
   ]
 }

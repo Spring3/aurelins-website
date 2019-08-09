@@ -1,5 +1,8 @@
 import React from 'react';
 
-export default () => (
-  <div>This is a model page</div>
+export default ({ children }) => (
+  <div>
+    <h3>This is a model page</h3>
+    {children}
+  </div>
 );
