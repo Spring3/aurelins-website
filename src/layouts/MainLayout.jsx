@@ -63,6 +63,7 @@ const SocialList = styled.ul`
 `;
 
 const Main = styled.main`
+  display: grid;
   padding-left: 25%;
   height: 100vh;
 
