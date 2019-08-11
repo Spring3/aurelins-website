@@ -1,32 +1,35 @@
 import React from 'react';
 import 'normalize.css';
 import { graphql } from 'gatsby';
+import styled from 'styled-components';
 
 import Layout from '../layouts/MainLayout';
+import Card from '../components/Card';
+
+const Grid = styled.div`
+  padding: 3rem 2rem 0rem 2rem;
+  display: grid;
+  grid-gap: 1.5rem;
+  grid-auto-flow: dense;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(15rem, 1fr));
+`;
 
 export default ({ data }) => {
   const { site = {}, allContentfulPortfolioItem = {} } = data || {};
   const items = allContentfulPortfolioItem.edges || [];
   return (
     <Layout>
-      {
-        items.map(({ node }) => (
-          <div>
-            <h2>{node.title}</h2>
-            <img
-              
-              src={node.previewImage.fluid.src}
-              srcSet={node.previewImage.fluid.srcSet}
-              sizes={node.previewImage.fluid.sizes}
-              alt={node.previewImage.title}
+      <Grid>
+        {
+          items.map(({ node }) => (
+            <Card
+              data={node}
+              key={node.contentful_id}
             />
-            <ul>
-              {node.tags.map((tag, i) => (<li key={i}>{tag}</li>))}
-            </ul>
-            <span>Created at: ${node.createdAt}</span>
-          </div>
-        ))
-      }
+          ))
+        }
+      </Grid>
     </Layout>
   );
 }
@@ -56,7 +59,7 @@ export const query = graphql`
           }
           previewImage {
             title
-            fluid(maxWidth: 300, maxHeight: 210) {
+            fluid {
               src
               srcSet
               sizes

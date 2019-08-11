@@ -63,13 +63,9 @@ const SocialList = styled.ul`
 `;
 
 const Main = styled.main`
-  display: grid;
-  grid-gap: 1.5rem;
-  grid-auto-flow: dense;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(15rem, 1fr));
   padding-left: 25%;
   height: 100vh;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   h1 {
     margin-top: 0px;
