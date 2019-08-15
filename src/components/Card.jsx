@@ -8,6 +8,7 @@ const Card = styled.div`
   position: relative;
   min-height: 300px;
   overflow: hidden;
+  background: ${props => props.slides ? 'transparent' : '#8AA27D'};
   
   h2 {
     margin: 0;
@@ -20,18 +21,30 @@ const Card = styled.div`
     opacity: 0;
     color: white;
     font-size: .8rem;
-    background: ${props => props.slides ? 'transparent' : '#8AA27D'};
+    padding: 5px;
+    border-radius: 3px;
+    background: ${props => props.slides ? 'rgba(138, 162, 125, .2)' : 'transparent' };
+    transition: .3s ease-in-out;
+    &:hover {
+      background: ${props => props.slides ? 'rgba(138, 162, 125, .6)' : 'transparent' };
+    }
   }
 
   .info {
     position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
+    bottom: 0rem;
+    left: 0rem;
+    right: 0rem;
     opacity: 0;
     color: white;
     h2 {
       margin-bottom: 1rem;
+    }
+    padding: 1rem;
+    background: ${props => props.slides ? 'rgba(138, 162, 125, .2)' : 'transparent' };
+    transition: .3s ease-in-out;
+    &:hover {
+      background: ${props => props.slides ? 'rgba(138, 162, 125, .6)' : 'transparent' };
     }
   }
 

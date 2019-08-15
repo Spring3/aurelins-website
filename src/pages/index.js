@@ -7,7 +7,7 @@ import Layout from '../layouts/MainLayout';
 import Card from '../components/Card';
 
 const Grid = styled.div`
-  padding: 3rem 2rem 0rem 2rem;
+  padding: 3rem 2rem 3rem 2rem;
   display: grid;
   grid-gap: 1.5rem;
   grid-auto-flow: dense;

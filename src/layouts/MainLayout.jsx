@@ -1,34 +1,35 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState, useRef, useEffect } from 'react';
+import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
 import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
+import MenuIcon from 'mdi-react/MenuIcon';
+import CloseIcon from 'mdi-react/CloseIcon';
+import { useSpring, animated } from 'react-spring';
 
-const Aside = styled.aside`
+const BurgerWrapper = styled.div`
   display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  position: fixed;
-  width: calc(25% - 4rem);
-  top: 0px;
-  padding: 0px 2rem;
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 1rem 0rem;
 
-  box-shadow: 2px 0px 10px 0px #EAEAEA;
-
-  @media (max-width: 1250px) {
-    width: calc(30% - 4rem);
-  }
-
-  @media (max-width: 1045px) {
-    width: calc(35% - 4rem);
+  button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    svg {
+      vertical-align: middle;
+    }
   }
 `;
 
 const Header = styled.header`
-  margin-top: 2rem;
-  color: #091E42;
-  margin-bottom: 2rem;
+  color: white;
+  margin-bottom: 4rem;
+
+  h4 {
+    color: #AAA;
+  }
 `;
 
 const MenuList = styled.ul`
@@ -38,13 +39,13 @@ const MenuList = styled.ul`
   flex-grow: 1;
 
   li {
-    font-size: 1rem;
-    color: #091E42;
+    font-size: .9rem;
+    color: #AAA;
     cursor: pointer;
     margin-bottom: 2rem;
 
     &:hover {
-      color: #FDB964;
+      color: white;
     }
   }
 `;
@@ -61,6 +62,30 @@ const SocialList = styled.ul`
     margin-right: 1rem;
   }
 `;
+
+
+const Aside = animated(styled.aside`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: black;
+  overflow: hidden;
+  position: fixed;
+  width: calc(25% - 4rem);
+  top: 0px;
+  padding: 0px 2rem;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  box-shadow: 2px 0px 10px 0px #EAEAEA;
+
+  @media (max-width: 1250px) {
+    width: calc(30% - 4rem);
+  }
+
+  @media (max-width: 1045px) {
+    width: calc(35% - 4rem);
+  }
+`);
 
 const Main = styled.main`
   padding-left: 25%;
@@ -80,24 +105,59 @@ const Main = styled.main`
   }
 `;
 
+const useSidebarAnimation = (isSidebarOpen) => {
+  const mainRef = useRef();
+  const sidebarRef = useRef();
+  const [width, setWidth] = useState(0);
+  
+  const throttledResize = useRef(throttle(() => setWidth(window.innerWidth), 300));
+  
+  useEffect(() => {
+    window.addEventListener('resize', throttledResize.current);
+    return () => {
+      console.log('before cleanup');
+      window.removeEventListener('resize', throttledResize.current);
+    };
+  }, [])
+
+  const props = useSpring({
+    width: isSidebarOpen
+      ? parseFloat(getComputedStyle(mainRef.current).paddingLeft) - parseFloat(getComputedStyle(sidebarRef.current).paddingLeft) * 2
+      : 0
+  });
+  return [{ mainRef, sidebarRef }, props];
+}
+
 export default ({ children }) => {
+  const [isSidebarOpen, toggleSidebar] = useState(false);
+  const [{ mainRef, sidebarRef }, props] = useSidebarAnimation(isSidebarOpen);
+  
   return (
     <Fragment>
-      <Aside>
+      <Aside ref={sidebarRef} style={props} isOpen={isSidebarOpen}>
+        <BurgerWrapper>
+          <button onClick={() => toggleSidebar(!isSidebarOpen)}>
+            {
+              isSidebarOpen
+              ? (<CloseIcon color="white" size={26} />)
+              : (<MenuIcon color="white" size={26} />)
+            }
+          </button>
+        </BurgerWrapper>
         <Header>
           <h2>Oleksandra Vasylenko</h2>
-          <h3>Student, 3D Artist</h3>
+          <h4>Student, 3D Artist</h4>
         </Header>
         <MenuList>
-          <li>HOME</li>
-          <li>CONTACT</li>
+          <li>Portfolio</li>
+          <li>Contact</li>
         </MenuList>
         <SocialList>
-          <li><InstagramIcon /></li>
-          <li><EmailOutlineIcon /></li>
+          <li><InstagramIcon color="white" /></li>
+          <li><EmailOutlineIcon color="white" /></li>
         </SocialList>
       </Aside>
-      <Main>
+      <Main ref={mainRef} isSidebarOpen={isSidebarOpen}>
         {children}
       </Main>
     </Fragment>
