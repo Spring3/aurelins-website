@@ -38,7 +38,7 @@ const MenuList = styled.ul`
   flex-grow: 1;
 
   li {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #091E42;
     cursor: pointer;
     margin-bottom: 2rem;

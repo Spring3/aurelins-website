@@ -48,6 +48,7 @@ export const query = graphql`
           contentful_id
           createdAt
           tags
+          slides
           images {
             title
             description

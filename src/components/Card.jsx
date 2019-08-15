@@ -1,10 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import ImageSlider from './ImageSlider';
+import CardImage from './CardImage';
+
 const Card = styled.div`
   position: relative;
   min-height: 300px;
-  background: #8AA27D;
+  overflow: hidden;
   
   h2 {
     margin: 0;
@@ -17,18 +20,7 @@ const Card = styled.div`
     opacity: 0;
     color: white;
     font-size: .8rem;
-  }
-
-  img {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    opacity: 1;
-    -webkit-transition: .3s ease-in-out;
-    transition: .3s ease-in-out;
+    background: ${props => props.slides ? 'transparent' : '#8AA27D'};
   }
 
   .info {
@@ -95,16 +87,26 @@ const months = [
 export default ({ data }) => {
   const createdAt = new Date(data.createdAt);
   return (
-    <Card>
+    <Card slides={!!data.slides}>
+      {
+        !!data.slides
+        ? (
+          <ImageSlider
+            images={data.images}
+            preview={data.previewImage}
+          />
+        ) 
+        : (
+          <CardImage
+            src={data.previewImage.fluid.src}
+            srcSet={data.previewImage.fluid.srcSet}
+            alt={data.previewImage.title}
+          />
+        )
+      }
       <div className="date">
         <span>{createdAt.getDay()} {months[createdAt.getMonth()]} {createdAt.getFullYear()}</span>
       </div>
-      <img
-        src={data.previewImage.fluid.src}
-        srcSet={data.previewImage.fluid.srcSet}
-        // sizes={data.previewImage.fluid.sizes}
-        alt={data.previewImage.title}
-      />
       <div className="info">
         <h2>{data.title}</h2>
         <TagList>
