@@ -1,6 +1,7 @@
 import React, { Fragment, useState, useRef, useEffect } from 'react';
 import throttle from 'lodash.throttle';
-import styled from 'styled-components';
+import { Link } from 'gatsby';
+import styled, { css } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
 import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
 import MenuIcon from 'mdi-react/MenuIcon';
@@ -40,11 +41,15 @@ const MenuList = styled.ul`
 
   li {
     font-size: .9rem;
-    color: #AAA;
-    cursor: pointer;
     margin-bottom: 2rem;
+    
+    a, a:visited, a:active {
+      transition: color .3s ease-in-out;
+      color: #AAA;
+      text-decoration: none;
+    }
 
-    &:hover {
+    a:focus, a:hover {
       color: white;
     }
   }
@@ -57,16 +62,17 @@ const SocialList = styled.ul`
   margin-bottom: 2rem;
   padding: 0;
   display: flex;
+  transition: .3s ease-in-out;
 
   li {
     margin-right: 1rem;
   }
 `;
 
-
 const Aside = animated(styled.aside`
   display: flex;
   flex-direction: column;
+  align-items: ${props => props.isOpen ? 'normal' : 'center'};
   height: 100vh;
   background: black;
   overflow: hidden;
@@ -76,8 +82,6 @@ const Aside = animated(styled.aside`
   padding: 0px 2rem;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  box-shadow: 2px 0px 10px 0px #EAEAEA;
-
   @media (max-width: 1250px) {
     width: calc(30% - 4rem);
   }
@@ -85,6 +89,24 @@ const Aside = animated(styled.aside`
   @media (max-width: 1045px) {
     width: calc(35% - 4rem);
   }
+
+  ${Header}, ${MenuList} {
+    visibility: ${props => props.isOpen
+      ? 'visible'
+      : 'collapse'
+    };
+  }
+
+  ${({ isOpen }) => !isOpen && css`
+    ${SocialList} {
+      flex-direction: column;
+      li {
+        margin-right: 0;
+        margin-top: 1rem;
+      }
+    }
+  `}
+
 `);
 
 const Main = styled.main`
@@ -123,7 +145,8 @@ const useSidebarAnimation = (isSidebarOpen) => {
   const props = useSpring({
     width: isSidebarOpen
       ? parseFloat(getComputedStyle(mainRef.current).paddingLeft) - parseFloat(getComputedStyle(sidebarRef.current).paddingLeft) * 2
-      : 0
+      : 0,
+    background: isSidebarOpen ? 'black' : 'white'
   });
   return [{ mainRef, sidebarRef }, props];
 }
@@ -131,16 +154,24 @@ const useSidebarAnimation = (isSidebarOpen) => {
 export default ({ children }) => {
   const [isSidebarOpen, toggleSidebar] = useState(false);
   const [{ mainRef, sidebarRef }, props] = useSidebarAnimation(isSidebarOpen);
+
+  const iconColor = isSidebarOpen ? 'white' : 'black';
   
   return (
     <Fragment>
-      <Aside ref={sidebarRef} style={props} isOpen={isSidebarOpen}>
+      <Aside
+        ref={sidebarRef}
+        style={props}
+        isOpen={isSidebarOpen}
+      >
         <BurgerWrapper>
-          <button onClick={() => toggleSidebar(!isSidebarOpen)}>
+          <button
+            onClick={() => toggleSidebar(!isSidebarOpen)}
+          >
             {
               isSidebarOpen
-              ? (<CloseIcon color="white" size={26} />)
-              : (<MenuIcon color="white" size={26} />)
+              ? (<CloseIcon color={iconColor} size={26} />)
+              : (<MenuIcon color={iconColor} size={26} />)
             }
           </button>
         </BurgerWrapper>
@@ -149,12 +180,12 @@ export default ({ children }) => {
           <h4>Student, 3D Artist</h4>
         </Header>
         <MenuList>
-          <li>Portfolio</li>
-          <li>Contact</li>
+          <li><Link to="/">Portfolio</Link></li>
+          <li><Link to="/contact">Contact</Link></li>
         </MenuList>
         <SocialList>
-          <li><InstagramIcon color="white" /></li>
-          <li><EmailOutlineIcon color="white" /></li>
+          <li><InstagramIcon color={iconColor} /></li>
+          <li><EmailOutlineIcon color={iconColor} /></li>
         </SocialList>
       </Aside>
       <Main ref={mainRef} isSidebarOpen={isSidebarOpen}>
