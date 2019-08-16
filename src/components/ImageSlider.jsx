@@ -24,6 +24,7 @@ const Button = styled.button`
 
   svg {
     fill: transparent;
+    transition: fill .1s ease-in-out;
   }
 
   &:hover {
