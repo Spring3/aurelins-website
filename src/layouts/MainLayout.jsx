@@ -108,7 +108,7 @@ const useSidebarAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
     width: isSidebarOpen
-      ? parseFloat(getComputedStyle(document.documentElement).fontSize) * 16
+      ? parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 16
       : 0,
     background: isSidebarOpen ? 'black' : 'white',
     ref: animationRef
@@ -139,8 +139,8 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
     paddingLeft: isSidebarOpen
-      ? parseFloat(getComputedStyle(document.documentElement).fontSize) * 20
-      : parseFloat(getComputedStyle(document.documentElement).fontSize) * 4,
+      ? parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 20
+      : parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 4,
     ref: animationRef
   });
   return [animationRef, props];
