@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Link } from 'gatsby';
 
 import ImageSlider from './ImageSlider';
 import CardImage from './CardImage';
@@ -107,14 +108,19 @@ export default ({ data }) => {
           <ImageSlider
             images={data.images}
             preview={data.previewImage}
+            slug={data.slug}
           />
         ) 
         : (
-          <CardImage
-            src={data.previewImage.fluid.src}
-            srcSet={data.previewImage.fluid.srcSet}
-            alt={data.previewImage.title}
-          />
+          <Link
+            to={`/portfolio/${data.slug}`}
+          >
+            <CardImage
+              src={data.previewImage.fluid.src}
+              srcSet={data.previewImage.fluid.srcSet}
+              alt={data.previewImage.title}
+            />
+          </Link>
         )
       }
       <div className="date">

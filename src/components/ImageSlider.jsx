@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTransition, animated } from 'react-spring';
+import { navigate } from 'gatsby';
 import styled from 'styled-components';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import ArrowLeftIcon from 'mdi-react/ArrowLeftIcon';
@@ -48,10 +49,12 @@ const ButtonNext = styled(Button)`
 
 const SlideImage = animated(CardImage);
 
-export default function ImageSlider ({ images, preview }) {
+export default function ImageSlider ({ slug, images, preview }) {
   const [index, setIndex] = useState(0);
   const [slides, setSlides] = useState([]);
   const [order, setOrder] = useState('normal');
+
+  console.log(slug);
 
   useEffect(
     () => {
@@ -63,6 +66,7 @@ export default function ImageSlider ({ images, preview }) {
               srcSet={image.fluid.srcSet}
               alt={image.title}
               style={style}
+              onClick={() => navigate(`/portfolio/${slug}`)}
             />
           ))
       )
@@ -71,7 +75,7 @@ export default function ImageSlider ({ images, preview }) {
   );
 
   const nextSlide = useCallback(
-    (event) => {
+    () => {
       setIndex(index => (index + 1) % slides.length);
       setOrder('normal');
     },

@@ -16,58 +16,65 @@ const Grid = styled.div`
 `;
 
 export default ({ data }) => {
-  // const { site = {}, allContentfulPortfolioItem = {} } = data || {};
-  // const items = allContentfulPortfolioItem.edges || [];
+  const { site = {}, allContentfulPortfolioItem = {} } = data || {};
+  const items = allContentfulPortfolioItem.edges || [];
   return (
     <Layout>
       <Grid>
-        {/* {
+        {
           items.map(({ node }) => (
             <Card
               data={node}
               key={node.contentful_id}
             />
           ))
-        } */}
+        }
       </Grid>
     </Layout>
   );
 }
 
-// export const query = graphql`
-//   query AllPortfolioItems {
-//     site {
-//       siteMetadata {
-//         title
-//       }
-//     }
-//     allContentfulPortfolioItem {
-//       edges {
-//         node {
-//           title
-//           contentful_id
-//           createdAt
-//           tags
-//           slides
-//           images {
-//             title
-//             description
-//             fluid {
-//               src
-//               srcSet
-//               sizes
-//             }
-//           }
-//           previewImage {
-//             title
-//             fluid {
-//               src
-//               srcSet
-//               sizes
-//             }
-//           }
-//         }
-//       }
-//     }
-//   }
-// `
+export const query = graphql`
+  query AllPortfolioItems {
+    site {
+      siteMetadata {
+        title
+      }
+    }
+    allContentfulPortfolioItem(
+      sort: {
+        fields: [createdAt],
+        order: ASC
+      },
+      limit: 20
+    ) {
+      edges {
+        node {
+          title
+          contentful_id
+          createdAt
+          tags
+          slides
+          slug
+          images {
+            title
+            description
+            fluid {
+              src
+              srcSet
+              sizes
+            }
+          }
+          previewImage {
+            title
+            fluid {
+              src
+              srcSet
+              sizes
+            }
+          }
+        }
+      }
+    }
+  }
+`
