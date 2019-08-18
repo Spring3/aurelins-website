@@ -1,5 +1,4 @@
-import React, { Fragment, useState, useRef, useEffect } from 'react';
-import throttle from 'lodash.throttle';
+import React, { Fragment, useState, useRef } from 'react';
 import { Link } from 'gatsby';
 import styled, { css } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
@@ -106,9 +105,15 @@ const Main = animated(styled.main`
 
 const useSidebarAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
+  console.log('sidebar styles should be', {
+    width: isSidebarOpen
+      ? 16 * 16
+      : 0,
+    background: isSidebarOpen ? 'black' : 'white'
+  });
   const props = useSpring({
     width: isSidebarOpen
-      ? parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 16
+      ? 16 * 16
       : 0,
     background: isSidebarOpen ? 'black' : 'white',
     ref: animationRef
@@ -119,8 +124,12 @@ const useSidebarAnimation = (isSidebarOpen) => {
 const useSidebarContentAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
-    opacity: isSidebarOpen ? 0 : 1,
-    transform: isSidebarOpen ? 'translate3d(0,100%,0)' : 'translate3d(0,0%,0)',
+    initial: {
+      opacity: 0,
+      transform: 'translateY(100%)'
+    },
+    opacity: isSidebarOpen ? 1 : 0,
+    transform: isSidebarOpen ? 'translateY(0%)' : 'translateY(100%)',
     ref: animationRef
   });
   return [animationRef, props];
@@ -129,6 +138,9 @@ const useSidebarContentAnimation = (isSidebarOpen) => {
 const useCenterAlignAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    initial: {
+      alignSelf: 'normal'
+    },
     alignSelf: isSidebarOpen ? 'normal' : 'center',
     ref: animationRef
   });
@@ -138,9 +150,12 @@ const useCenterAlignAnimation = (isSidebarOpen) => {
 const useResetMainPaddingAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    initial: {
+      paddingLeft: 16 * 4
+    },
     paddingLeft: isSidebarOpen
-      ? parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 20
-      : parseFloat(typeof getComputedStyle !== 'undefined' && getComputedStyle(document.documentElement).fontSize) * 4,
+      ? 16 * 20
+      : 16 * 4,
     ref: animationRef
   });
   return [animationRef, props];
@@ -149,14 +164,16 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
 export default ({ children }) => {
   const [isSidebarOpen, toggleSidebar] = useState(false);
   const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isSidebarOpen);
-  const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(!isSidebarOpen);
+  const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isSidebarOpen);
   const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isSidebarOpen);
   const [resetMainPaddingAnimationRef, resetMainPaddingAnimationProps] = useResetMainPaddingAnimation(isSidebarOpen);
 
+  const animationSequence = [centerAlignAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef];
+
   useChain(
     isSidebarOpen
-      ? [centerAlignAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef]
-      : [sidebarContentAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, centerAlignAnimationRef],
+      ? animationSequence
+      : animationSequence.reverse(),
     isSidebarOpen
       ? [0, 0, 0, 0.38]
       : [0, 0.4, 0.4]
@@ -200,7 +217,7 @@ export default ({ children }) => {
           <li><EmailOutlineIcon color={iconColor} /></li>
         </SocialList>
       </Aside>
-      <Main
+      <Main        
         style={resetMainPaddingAnimationProps}
       >
         {children}
