@@ -1,17 +1,22 @@
 import React, { Fragment, useState, useRef } from 'react';
 import { Link } from 'gatsby';
-import styled, { css } from 'styled-components';
+import styled, { css, createGlobalStyle } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
 import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
 import MenuIcon from 'mdi-react/MenuIcon';
 import CloseIcon from 'mdi-react/CloseIcon';
 import { useChain, useSpring, animated } from 'react-spring';
 
+const GlobalStyle = createGlobalStyle`
+  body {
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+`;
+
 const BurgerWrapper = animated(styled.div`
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  margin: 1rem 0rem;
+  align-items: center;  
 
   button {
     background: transparent;
@@ -25,6 +30,7 @@ const BurgerWrapper = animated(styled.div`
 
 const Header = animated(styled.header`
   color: white;
+  margin-top: 2rem;
   margin-bottom: 4rem;
 
   h4 {
@@ -58,7 +64,6 @@ const SocialList = styled.ul`
   justify-self: flex-end;
   list-style-type: none;
   margin: 0;
-  margin-bottom: 2rem;
   padding: 0;
   display: flex;
   transition: .3s ease-in-out;
@@ -71,14 +76,13 @@ const SocialList = styled.ul`
 const Aside = animated(styled.aside`
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 4rem);
   background: black;
   overflow: hidden;
   position: fixed;
   width: 16rem;
   top: 0px;
-  padding: 0px 2rem;
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 2rem 2rem;
 
   ${({ isOpen }) => !isOpen && css`
     ${SocialList} {
@@ -91,12 +95,18 @@ const Aside = animated(styled.aside`
     }
   `}
 
+  @media (max-width: 777px) {
+    flex-direction: row;
+    height: 1rem;
+    width: 100%;
+    z-index: 2;
+    justify-content: flex-end;
+  }
 `);
 
 const Main = animated(styled.main`
   padding-left: 20rem;
   height: 100vh;
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   h1 {
     margin-top: 0px;
@@ -183,6 +193,7 @@ export default ({ children }) => {
 
   return (
     <Fragment>
+      <GlobalStyle />
       <Aside
         style={sidebarAnimationProps}
         isOpen={isSidebarOpen}
