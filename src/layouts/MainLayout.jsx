@@ -10,6 +10,7 @@ import { useChain, useSpring, animated } from 'react-spring';
 const GlobalStyle = createGlobalStyle`
   body {
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: black;
   }
 `;
 
@@ -66,7 +67,7 @@ const SocialList = styled.ul`
   margin: 0;
   padding: 0;
   display: flex;
-  transition: .3s ease-in-out;
+  transition: all .3s ease-in-out;
 
   li {
     margin-right: 1rem;
@@ -81,6 +82,7 @@ const Aside = animated(styled.aside`
   overflow: hidden;
   position: fixed;
   width: 16rem;
+  left: 2rem;
   top: 0px;
   padding: 2rem 2rem;
 
@@ -105,7 +107,7 @@ const Aside = animated(styled.aside`
 `);
 
 const Main = animated(styled.main`
-  padding-left: 20rem;
+  padding-left: 22rem;
   height: 100vh;
 
   h1 {
@@ -119,13 +121,13 @@ const useSidebarAnimation = (isSidebarOpen) => {
     width: isSidebarOpen
       ? 16 * 16
       : 0,
-    background: isSidebarOpen ? 'black' : 'white'
+    background: isSidebarOpen ? 'rgb(20,20,20)' : 'transparent'
   });
   const props = useSpring({
     width: isSidebarOpen
       ? 16 * 16
       : 0,
-    background: isSidebarOpen ? 'black' : 'white',
+    background: isSidebarOpen ? 'rgb(20,20,20)' : 'black',
     ref: animationRef
   });
   return [animationRef, props];
@@ -164,15 +166,15 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
       paddingLeft: 16 * 4
     },
     paddingLeft: isSidebarOpen
-      ? 16 * 20
-      : 16 * 4,
+      ? 16 * 22
+      : 16 * 6,
     ref: animationRef
   });
   return [animationRef, props];
 };
 
 export default ({ children }) => {
-  const [isSidebarOpen, toggleSidebar] = useState(false);
+  const [isSidebarOpen, toggleSidebar] = useState(true);
   const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isSidebarOpen);
   const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isSidebarOpen);
   const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isSidebarOpen);
@@ -189,7 +191,7 @@ export default ({ children }) => {
       : [0, 0.4, 0.4]
   );
 
-  const iconColor = isSidebarOpen ? 'white' : 'black';
+  const iconColor = 'white';
 
   return (
     <Fragment>
@@ -220,7 +222,8 @@ export default ({ children }) => {
         <MenuList
           style={sidebarContentAnimationProps}
         >
-          <li><Link to="/">Portfolio</Link></li>
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/portfolio">Portfolio</Link></li>
           <li><Link to="/contact">Contact</Link></li>
         </MenuList>
         <SocialList>

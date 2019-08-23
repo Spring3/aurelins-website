@@ -6,6 +6,7 @@ import ImageSlider from './ImageSlider';
 import CardImage from './CardImage';
 
 const Card = styled.div`
+  border-radius: 3px;
   position: relative;
   min-height: 300px;
   overflow: hidden;

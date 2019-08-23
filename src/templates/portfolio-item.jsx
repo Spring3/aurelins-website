@@ -19,6 +19,7 @@ const PreviewImage = styled.figure`
     top: 2rem;
 
     img {
+      max-height: 600px;
       max-width: 100%;
       object-fit: cover;
       border-radius: 6px;
@@ -42,6 +43,7 @@ const Information = styled.div`
 `;
 
 const Description = styled.div`
+  color: #AAA;
   grid-column: span 5;
   padding: 0rem 2rem;
 
@@ -66,9 +68,12 @@ const Images = styled.div`
   grid-area: i;
   display: grid;
   grid-template-columns: repeat(auto-fit, 200px);
+  grid-template-rows: repeat(auto-fit, 200px);
   grid-gap: 1.5rem;
 
   img {
+    height: 100%;
+    object-fit: contain !important;
     border-radius: 6px;
     box-shadow: 0px 10px 15px 0px rgba(150, 150, 150, .3);
     cursor: pointer;
