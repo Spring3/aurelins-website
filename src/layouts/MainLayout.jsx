@@ -78,7 +78,7 @@ const Aside = animated(styled.aside`
   display: flex;
   flex-direction: column;
   height: calc(100vh - 4rem);
-  background: black;
+  background: rgba(20,20,20,.8);
   overflow: hidden;
   position: fixed;
   width: 16rem;
@@ -117,17 +117,11 @@ const Main = animated(styled.main`
 
 const useSidebarAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
-  console.log('sidebar styles should be', {
-    width: isSidebarOpen
-      ? 16 * 16
-      : 0,
-    background: isSidebarOpen ? 'rgb(20,20,20)' : 'transparent'
-  });
   const props = useSpring({
     width: isSidebarOpen
       ? 16 * 16
       : 0,
-    background: isSidebarOpen ? 'rgb(20,20,20)' : 'black',
+    background: isSidebarOpen ? 'rgba(20,20,20,.8)' : 'rgba(20,20,20,.0)',
     ref: animationRef
   });
   return [animationRef, props];
