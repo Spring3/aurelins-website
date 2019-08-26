@@ -13,6 +13,10 @@ const Grid = styled.div`
   grid-auto-flow: dense;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   grid-template-rows: repeat(auto-fill, minmax(15rem, 1fr));
+
+  @media (max-width: 900px) {
+    margin-top: 100px;
+  }
 `;
 
 export default ({ data }) => {

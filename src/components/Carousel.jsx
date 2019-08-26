@@ -57,7 +57,6 @@ export default (({ images }) => {
 
   return transitions.map(({ item, props, key }) => {
     const Slide = slides[item];
-    console.log(props);
     return Slide
       ? <Slide key={key} style={props} />
       : null

@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useRef } from 'react';
+import React, { Fragment, useState, useEffect, useRef } from 'react';
 import { Link } from 'gatsby';
 import styled, { css, createGlobalStyle } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
@@ -6,6 +6,9 @@ import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
 import MenuIcon from 'mdi-react/MenuIcon';
 import CloseIcon from 'mdi-react/CloseIcon';
 import { useChain, useSpring, animated } from 'react-spring';
+import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
+
+import useWindowResize from '../hooks/useWindowResize';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -37,6 +40,18 @@ const Header = animated(styled.header`
   h4 {
     color: #AAA;
   }
+
+  @media (max-width: 900px) {
+    margin: 0;
+    h2 {
+      font-size: 1.2rem;
+      cursor: pointer;
+      a, a:active, a:focus, a:visited {
+        text-decoration: none !important;
+        color: white !important;
+      }
+    }
+  }
 `);
 
 const MenuList = animated(styled.ul`
@@ -55,13 +70,21 @@ const MenuList = animated(styled.ul`
       text-decoration: none;
     }
 
-    a:focus, a:hover {
+    a:focus, a:hover, a.active {
       color: white;
+    }
+  }
+
+  @media (max-width: 900px) {
+    box-sizing: border-box;
+    margin-top: 4rem;
+    li {
+      font-size: .9rem;
     }
   }
 `);
 
-const SocialList = styled.ul`
+const SocialList = animated(styled.ul`
   justify-self: flex-end;
   list-style-type: none;
   margin: 0;
@@ -72,37 +95,68 @@ const SocialList = styled.ul`
   li {
     margin-right: 1rem;
   }
-`;
 
-const Aside = animated(styled.aside`
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 4rem);
-  background: rgba(20,20,20,.8);
-  overflow: hidden;
-  position: fixed;
-  width: 16rem;
-  left: 2rem;
-  top: 0px;
-  padding: 2rem 2rem;
-
-  ${({ isOpen }) => !isOpen && css`
-    ${SocialList} {
+  @media (min-width: 901px) {
+    ${props => !props.isOpen && css`
       flex-direction: column;
       align-self: center;
       li {
         margin-right: 0;
         margin-top: 1rem;
       }
-    }
-  `}
+    `}
+  }
 
-  @media (max-width: 777px) {
-    flex-direction: row;
-    height: 1rem;
-    width: 100%;
-    z-index: 2;
-    justify-content: flex-end;
+  @media (max-width: 900px) {
+    margin-top: 4rem;
+    height: 100px;
+  }
+`);
+
+const DesktopSidebar = animated(styled.aside`
+  display: flex;
+  top: 0px;
+  padding: 1rem 2rem;
+  background: rgba(20,20,20,.98);
+  
+  flex-direction: column;
+  height: calc(100vh - 2rem);
+  overflow: hidden;
+  position: fixed;
+  width: 16rem;
+  left: 2rem;
+`);
+
+const MobileSidebar = styled.aside`
+  height: auto;
+  top: 0px;
+  z-index: 1;
+  padding: 1rem 2rem;
+  background: rgba(20,20,20,.98);
+  box-sizing: border-box;
+  width: 100%;
+  position: fixed;
+  left: 0;
+`;
+
+const MobileNav = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const MobileSidebarContent = animated(styled.div`
+  overflow: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  h4 {
+    color: #AAA;
   }
 `);
 
@@ -112,6 +166,10 @@ const Main = animated(styled.main`
 
   h1 {
     margin-top: 0px;
+  }
+
+  @media (max-width: 900px) {
+    padding-left: 0 !important;
   }
 `);
 
@@ -127,15 +185,41 @@ const useSidebarAnimation = (isSidebarOpen) => {
   return [animationRef, props];
 }
 
+const useMobileSidebarAnimation = (isSidebarOpen) => {
+  const animationRef = useRef();
+  const props = useSpring({
+    width: '100%',
+    height: isSidebarOpen ? '91.6vh' : '0vh',
+    ref: animationRef
+  });
+  return [animationRef, props];
+}
+
 const useSidebarContentAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
-    initial: {
-      opacity: 0,
-      transform: 'translateY(100%)'
-    },
     opacity: isSidebarOpen ? 1 : 0,
     transform: isSidebarOpen ? 'translateY(0%)' : 'translateY(100%)',
+    ref: animationRef
+  });
+  return [animationRef, props];
+}
+
+const useMobileSidebarContentAnimation = (isSidebarOpen) => {
+  const animationRef = useRef();
+  const props = useSpring({
+    opacity: isSidebarOpen ? 1 : 0,
+    transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)',
+    ref: animationRef
+  });
+  return [animationRef, props];
+}
+
+const useMobileSidebarSocialAnimation = (isSidebarOpen) => {
+  const animationRef = useRef();
+  const props = useSpring({
+    opacity: isSidebarOpen ? 1 : 0,
+    transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)',
     ref: animationRef
   });
   return [animationRef, props];
@@ -144,9 +228,6 @@ const useSidebarContentAnimation = (isSidebarOpen) => {
 const useCenterAlignAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
-    initial: {
-      alignSelf: 'normal'
-    },
     alignSelf: isSidebarOpen ? 'normal' : 'center',
     ref: animationRef
   });
@@ -156,9 +237,6 @@ const useCenterAlignAnimation = (isSidebarOpen) => {
 const useResetMainPaddingAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
-    initial: {
-      paddingLeft: 16 * 4
-    },
     paddingLeft: isSidebarOpen
       ? 16 * 22
       : 16 * 6,
@@ -168,21 +246,49 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
 };
 
 export default ({ children }) => {
-  const [isSidebarOpen, toggleSidebar] = useState(true);
-  const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isSidebarOpen);
-  const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isSidebarOpen);
-  const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isSidebarOpen);
-  const [resetMainPaddingAnimationRef, resetMainPaddingAnimationProps] = useResetMainPaddingAnimation(isSidebarOpen);
+  const screenWidth = useWindowResize();
+  const targetElement = useRef(null);
+  const isMobile = screenWidth <= 900;
+  const [isOpen, toggleSidebar] = useState(!isMobile);
+  const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isOpen);
+  const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isOpen);
+  const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isOpen);
+  const [resetMainPaddingAnimationRef, resetMainPaddingAnimationProps] = useResetMainPaddingAnimation(isOpen);
 
-  const animationSequence = [centerAlignAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef];
+  const [mobileSidebarAnimationRef, mobileSidebarAnimationProps] = useMobileSidebarAnimation(isOpen);
+  const [mobileSidebarContentAnimationRef, mobileSidebarContentAnimationProps] = useMobileSidebarContentAnimation(isOpen);
+  const [mobileSidebarSocialAnimationRef, mobileSidebarSocialAnimationProps] = useMobileSidebarSocialAnimation(isOpen);
+  
+  const animationSequence = isMobile
+    ? [mobileSidebarAnimationRef, mobileSidebarContentAnimationRef, mobileSidebarSocialAnimationRef]
+    : [centerAlignAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef];
+
+  const timestamps = isMobile
+    ? isOpen ? [0] : [0, 0, .8]
+    : isOpen ? [0, 0, 0, 0.38] : [0, 0.4, 0.4];
+
+  useEffect(() => {
+    if (isMobile) {
+      targetElement.current = document.querySelector('#nav-mobile');
+    } else {
+      targetElement.current = null;
+    }
+  }, [screenWidth]);
+
+  useEffect(() => {
+    if (isOpen && isMobile && targetElement.current) {
+      disableBodyScroll(targetElement.current);
+    }
+    return () => enableBodyScroll(targetElement.current);
+  }, [isOpen]);
+  
+  useEffect(() => clearAllBodyScrollLocks, []);
 
   useChain(
-    isSidebarOpen
+    isOpen
       ? animationSequence
       : animationSequence.reverse(),
-    isSidebarOpen
-      ? [0, 0, 0, 0.38]
-      : [0, 0.4, 0.4]
+    timestamps
   );
 
   const iconColor = 'white';
@@ -190,43 +296,88 @@ export default ({ children }) => {
   return (
     <Fragment>
       <GlobalStyle />
-      <Aside
-        style={sidebarAnimationProps}
-        isOpen={isSidebarOpen}
-      >
-        <BurgerWrapper
-          style={centerAlignAnimationProps}
-        >
-          <button
-            onClick={() => toggleSidebar(!isSidebarOpen)}
+      {
+        !isMobile && (
+          <DesktopSidebar
+            style={sidebarAnimationProps}
+            isOpen={isOpen}
           >
-            {
-              isSidebarOpen
-              ? (<CloseIcon color={iconColor} size={26} />)
-              : (<MenuIcon color={iconColor} size={26} />)
-            }
-          </button>
-        </BurgerWrapper>
-        <Header
-          style={sidebarContentAnimationProps}
-        >
-          <h2>Oleksandra Vasylenko</h2>
-          <h4>Student, 3D Artist</h4>
-        </Header>
-        <MenuList
-          style={sidebarContentAnimationProps}
-        >
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/portfolio">Portfolio</Link></li>
-          <li><Link to="/contact">Contact</Link></li>
-        </MenuList>
-        <SocialList>
-          <li><InstagramIcon color={iconColor} /></li>
-          <li><EmailOutlineIcon color={iconColor} /></li>
-        </SocialList>
-      </Aside>
+            <BurgerWrapper
+              style={centerAlignAnimationProps}
+            >
+              <button
+                onClick={() => toggleSidebar(!isOpen)}
+              >
+                {
+                  isOpen
+                    ? (<CloseIcon color={iconColor} size={26} />)
+                    : (<MenuIcon color={iconColor} size={26} />)
+                }
+              </button>
+            </BurgerWrapper>
+            <Header
+              style={sidebarContentAnimationProps}
+            >
+              <h2>Oleksandra Vasylenko</h2>
+              <h4>Student, 3D Artist</h4>
+            </Header>
+            <MenuList
+              style={sidebarContentAnimationProps}
+            >
+              <li><Link to="/" activeClassName="active">Home</Link></li>
+              <li><Link to="/portfolio" activeClassName="active">Portfolio</Link></li>
+              <li><Link to="/contact" activeClassName="active">Contact</Link></li>
+            </MenuList>
+            <SocialList isOpen={isOpen}>
+              <li><InstagramIcon color={iconColor} /></li>
+              <li><EmailOutlineIcon color={iconColor} /></li>
+            </SocialList>
+          </DesktopSidebar>
+        )
+      }
+      {
+        isMobile && (
+          <Fragment>
+            <MobileSidebar
+              isOpen={isOpen}
+            >
+              <MobileNav>
+                <Header>
+                  <h2><Link to="/">Oleksandra Vasylenko</Link></h2>
+                </Header>
+                <BurgerWrapper>
+                  <button
+                    onClick={() => toggleSidebar(!isOpen)}
+                  >
+                    {
+                      isOpen
+                        ? (<CloseIcon color={iconColor} size={26} />)
+                        : (<MenuIcon color={iconColor} size={26} />)
+                    }
+                  </button>
+                </BurgerWrapper>
+              </MobileNav>
+              <MobileSidebarContent
+                style={mobileSidebarAnimationProps}
+                id="nav-mobile"
+              >
+                <h4>Student, 3D Artist</h4>
+                <MenuList style={mobileSidebarContentAnimationProps}>
+                  <li><Link to="/" activeClassName="active">Home</Link></li>
+                  <li><Link to="/portfolio" activeClassName="active">Portfolio</Link></li>
+                  <li><Link to="/contact" activeClassName="active">Contact</Link></li>
+                </MenuList>
+                <SocialList style={mobileSidebarSocialAnimationProps}>
+                  <li><InstagramIcon color={iconColor} /></li>
+                  <li><EmailOutlineIcon color={iconColor} /></li>
+                </SocialList>
+              </MobileSidebarContent>
+            </MobileSidebar>
+          </Fragment>
+        )
+      }
       <Main        
-        style={resetMainPaddingAnimationProps}
+        style={isMobile ? null : resetMainPaddingAnimationProps}
       >
         {children}
       </Main>
