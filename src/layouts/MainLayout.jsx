@@ -117,7 +117,7 @@ const DesktopSidebar = animated(styled.aside`
   display: flex;
   top: 0px;
   padding: 1rem 2rem;
-  background: rgba(20,20,20,.98);
+  background: rgba(20,20,20,.9);
   
   flex-direction: column;
   height: calc(100vh - 2rem);
@@ -132,7 +132,7 @@ const MobileSidebar = styled.aside`
   top: 0px;
   z-index: 1;
   padding: 1rem 2rem;
-  background: rgba(20,20,20,.98);
+  background: rgba(20,20,20,.9);
   box-sizing: border-box;
   width: 100%;
   position: fixed;
@@ -179,7 +179,7 @@ const useSidebarAnimation = (isSidebarOpen) => {
     width: isSidebarOpen
       ? 16 * 16
       : 0,
-    background: isSidebarOpen ? 'rgba(20,20,20,.8)' : 'rgba(20,20,20,.0)',
+    background: isSidebarOpen ? 'rgba(20,20,20,.9)' : 'rgba(20,20,20,.0)',
     ref: animationRef
   });
   return [animationRef, props];
