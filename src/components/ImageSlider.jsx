@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useTransition, animated } from 'react-spring';
+import { useTransition } from 'react-spring';
 import { navigate } from 'gatsby';
 import styled from 'styled-components';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
@@ -47,8 +47,6 @@ const ButtonNext = styled(Button)`
   bottom: 0;
 `;
 
-const SlideImage = animated(CardImage);
-
 export default function ImageSlider ({ slug, images, preview }) {
   const [index, setIndex] = useState(0);
   const [slides, setSlides] = useState([]);
@@ -60,20 +58,17 @@ export default function ImageSlider ({ slug, images, preview }) {
     () => {
       setSlides(
         [preview, ...images.filter(image => image.title !== preview.title)]
-          .map(image => ({ style }) => {
-            const img = new Image();
-            img.src = image.fluid.src;
-            return (
-              <SlideImage
-                preview={image.file.url}
-                src={image.fluid.src}
-                srcSet={image.fluid.srcSet}
-                alt={image.title}
-                style={style}
-                onClick={() => navigate(`/portfolio/${slug}`)}
-              />
-            )
-          })
+          .map(image => ({ style }) => (
+            <CardImage
+              preview={image.file.url}
+              src={image.fluid.src}
+              srcSet={image.fluid.srcSet}
+              alt={image.title}
+              style={style}
+              onClick={() => navigate(`/portfolio/${slug}`)}
+            />
+          )
+        )
       )
     },
     []
@@ -96,10 +91,6 @@ export default function ImageSlider ({ slug, images, preview }) {
   );
 
   const transitions = useTransition(index, p => p, {
-    initial: {
-      opacity: 1,
-      transform: 'translate3d(0%,0,0)'
-    },
     from: () => order === 'normal'
       ? {
         opacity: 1,
@@ -121,13 +112,15 @@ export default function ImageSlider ({ slug, images, preview }) {
       : {
         opacity: 0,
         transform: 'translate3d(100%,0,0)'
-      }
+      },
+      unique: true,
+      reset: true
   });
 
   return (
     <Slides>
       {
-        transitions.map(({ item, props, key}) => {
+        transitions.map(({ item, props, key }) => {
           const Slide = slides[item];
           return Slide
             ? <Slide key={key} style={props} />
