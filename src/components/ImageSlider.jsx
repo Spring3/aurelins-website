@@ -91,6 +91,10 @@ export default function ImageSlider ({ slug, images, preview }) {
   );
 
   const transitions = useTransition(index, p => p, {
+    initial: {
+      opacity: 1,
+      transform: 'translate3d(0%,0,0)'
+    },
     from: () => order === 'normal'
       ? {
         opacity: 1,
