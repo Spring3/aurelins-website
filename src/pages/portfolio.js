@@ -63,6 +63,9 @@ export const query = graphql`
           images {
             title
             description
+            file {
+              url
+            }
             fluid {
               src
               srcSet
@@ -71,6 +74,9 @@ export const query = graphql`
           }
           previewImage {
             title
+            file {
+              url
+            }
             fluid {
               src
               srcSet

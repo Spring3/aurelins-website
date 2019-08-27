@@ -10,7 +10,8 @@ const Card = styled.div`
   position: relative;
   min-height: 300px;
   overflow: hidden;
-  background: ${props => props.slides ? 'transparent' : '#8AA27D'};
+  background: transparent;
+  transition: background .3s ease-in-out;
   
   h2 {
     margin: 0;
@@ -51,6 +52,7 @@ const Card = styled.div`
   }
 
   &:hover {
+    background: ${props => props.slides ? 'transparent' : 'rgba(138,162,125,1)'};
     cursor: pointer;
 
     img {
@@ -117,6 +119,7 @@ export default ({ data }) => {
             to={`/portfolio/${data.slug}`}
           >
             <CardImage
+              preview={data.previewImage.file.url}
               src={data.previewImage.fluid.src}
               srcSet={data.previewImage.fluid.srcSet}
               alt={data.previewImage.title}

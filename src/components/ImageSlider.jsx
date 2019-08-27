@@ -60,15 +60,20 @@ export default function ImageSlider ({ slug, images, preview }) {
     () => {
       setSlides(
         [preview, ...images.filter(image => image.title !== preview.title)]
-          .map(image => ({ style }) => (
-            <SlideImage
-              src={image.fluid.src}
-              srcSet={image.fluid.srcSet}
-              alt={image.title}
-              style={style}
-              onClick={() => navigate(`/portfolio/${slug}`)}
-            />
-          ))
+          .map(image => ({ style }) => {
+            const img = new Image();
+            img.src = image.fluid.src;
+            return (
+              <SlideImage
+                preview={image.file.url}
+                src={image.fluid.src}
+                srcSet={image.fluid.srcSet}
+                alt={image.title}
+                style={style}
+                onClick={() => navigate(`/portfolio/${slug}`)}
+              />
+            )
+          })
       )
     },
     []
@@ -90,47 +95,34 @@ export default function ImageSlider ({ slug, images, preview }) {
     [slides]
   );
 
-  const transitionsPrevious = useTransition(index, p => p, {
+  const transitions = useTransition(index, p => p, {
     initial: {
       opacity: 1,
       transform: 'translate3d(0%,0,0)'
     },
-    from: {
-      opacity: 1,
-      transform: 'translate3d(-100%,0,0)'
-    },
+    from: () => order === 'normal'
+      ? {
+        opacity: 1,
+        transform: 'translate3d(100%,0,0)'
+      }
+      : {
+        opacity: 1,
+        transform: 'translate3d(-100%,0,0)'
+      },
     enter: {
       opacity: 1,
       transform: 'translate3d(0%,0,0)'
     },
-    leave: {
-      opacity: 0,
-      transform: 'translate3d(100%,0,0)'
-    }
+    leave: () => order === 'normal'
+      ? {
+        opacity: 0,
+        transform: 'translate3d(-100%,0,0)'
+      }
+      : {
+        opacity: 0,
+        transform: 'translate3d(100%,0,0)'
+      }
   });
-
-  const transitionsNext = useTransition(index, p => p, {
-    initial: {
-      opacity: 1,
-      transform: 'translate3d(0%,0,0)'
-    },
-    from: {
-      opacity: 1,
-      transform: 'translate3d(100%,0,0)'
-    },
-    enter: {
-      opacity: 1,
-      transform: 'translate3d(0%,0,0)'
-    },
-    leave: {
-      opacity: 0,
-      transform: 'translate3d(-100%,0,0)'
-    }
-  });
-
-  const transitions = order === 'normal'
-    ? transitionsNext
-    : transitionsPrevious;
 
   return (
     <Slides>

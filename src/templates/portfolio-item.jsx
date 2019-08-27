@@ -77,15 +77,10 @@ const Images = styled.div`
   img {
     height: 100%;
     object-fit: contain !important;
-    border-radius: 6px; 
-    // box-shadow: 0px 10px 15px 0px rgba(150, 150, 150, .3);
+    border-radius: 6px;
     cursor: pointer;
     transition: all .3s ease-in-out;
-  }
-
-  img.selected,
-  img:hover { 
-    // box-shadow: 0px 2px 5px 0px rgba(50, 50, 50, .3);
+    vertical-align: middle;
   }
 
   @media (max-width: 777px) {
@@ -98,7 +93,6 @@ const Images = styled.div`
 export default ({ data: { contentfulPortfolioItem = {} } }) => {
   const { previewImage, images } = contentfulPortfolioItem;
   const [selectedImage, selectImage] = useState(previewImage);
-  console.log(contentfulPortfolioItem);
   return (
     <MainLayout>
       <Wrapper>

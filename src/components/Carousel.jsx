@@ -19,12 +19,16 @@ export default (({ images }) => {
   
   useEffect(
     () => {
-      setSlides(images.map(image => ({ style }) => (
-        <Slide
-          image={image.file.url}
-          style={style}
-        />
-      )))
+      setSlides(images.map((image) => {
+        const img = new Image();
+        img.src = image.file.url;
+        return ({ style }) => (
+          <Slide
+            image={image.file.url}
+            style={style}
+          />
+        );
+      }))
     },
     [images]
   );
