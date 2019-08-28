@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useTransition } from 'react-spring';
 import { navigate } from 'gatsby';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import ArrowLeftIcon from 'mdi-react/ArrowLeftIcon';
+import { Transition } from 'react-transition-group';
 
 import CardImage from './CardImage';
 
@@ -47,90 +47,121 @@ const ButtonNext = styled(Button)`
   bottom: 0;
 `;
 
-export default function ImageSlider ({ slug, images, preview }) {
-  const [index, setIndex] = useState(0);
-  const [slides, setSlides] = useState([]);
-  const [order, setOrder] = useState('normal');
+const slideInNormalAnimation = keyframes`
+  from {
+    opacity: 1;
+    transform: translate3d(100%,0,0);
+  }
 
-  console.log(slug);
+  to {
+    opacity: 1;
+    transform: translate3d(0%,0,0);
+  }
+`;
+
+const slideInReversedAnimation = keyframes`
+  from {
+    opacity: 1;
+    transform: translate3d(-100%,0,0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0%,0,0);
+  }
+`;
+
+const slideOutNormalAnimation = keyframes`
+  from {
+    opacity: 1;
+    transform: translate3d(0%,0,0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(-100%,0,0);
+  }
+`;
+
+const slideOutReversedAnimation = keyframes`
+  from {
+    opacity: 1;
+    transform: translate3d(0%,0,0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(100%,0,0);
+  }
+`;
+
+const Slide = styled(CardImage)`
+  animation-fill-mode: forwards;
+  animation-duration: .3s;
+  animation-timing-function: ease;
+  ${({ direction, active }) => active
+    ? css `
+      animation-name: ${direction === 'normal' ? slideInNormalAnimation : slideInReversedAnimation};
+    `
+    : css `
+      animation-name: ${direction === 'normal' ? slideOutNormalAnimation : slideOutReversedAnimation};
+    `
+  }
+`;
+
+const Slider = styled.div`
+`;
+
+export default function ImageSlider ({ slug, images, preview }) {
+  const [position, setPosition] = useState({
+    index: 0,
+    order: 'normal'
+  });
+  const [slides, setSlides] = useState([]);
 
   useEffect(
-    () => {
-      setSlides(
-        [preview, ...images.filter(image => image.title !== preview.title)]
-          .map(image => ({ style }) => (
-            <CardImage
-              preview={image.file.url}
-              src={image.fluid.src}
-              srcSet={image.fluid.srcSet}
-              alt={image.title}
-              style={style}
-              onClick={() => navigate(`/portfolio/${slug}`)}
-            />
-          )
-        )
-      )
-    },
+    () => setSlides([preview, ...images.filter(image => image.title !== preview.title)]),
     []
   );
 
   const nextSlide = useCallback(
     () => {
-      setIndex(index => (index + 1) % slides.length);
-      setOrder('normal');
+      setPosition(position => ({
+        index: (position.index + 1) % slides.length,
+        order: 'normal'
+      }));
     },
     [slides]
   );
 
   const previousSlide = useCallback(
     () => {
-      setIndex(index => (index - 1 + slides.length) % slides.length);
-      setOrder('reversed');
+      setPosition(position => ({
+        index: (position.index - 1 + slides.length) % slides.length,
+        order: 'reversed'
+      }));
     },
     [slides]
   );
 
-  const transitions = useTransition(index, p => p, {
-    initial: {
-      opacity: 1,
-      transform: 'translate3d(0%,0,0)'
-    },
-    from: () => order === 'normal'
-      ? {
-        opacity: 1,
-        transform: 'translate3d(100%,0,0)'
-      }
-      : {
-        opacity: 1,
-        transform: 'translate3d(-100%,0,0)'
-      },
-    enter: {
-      opacity: 1,
-      transform: 'translate3d(0%,0,0)'
-    },
-    leave: () => order === 'normal'
-      ? {
-        opacity: 0,
-        transform: 'translate3d(-100%,0,0)'
-      }
-      : {
-        opacity: 0,
-        transform: 'translate3d(100%,0,0)'
-      },
-      unique: true,
-      reset: true
-  });
-
   return (
     <Slides>
-      {
-        transitions.map(({ item, props, key }) => {
-          const Slide = slides[item];
-          return Slide
-            ? <Slide key={key} style={props} />
-            : null
-        })
-      }
+      <Slider>
+        {
+          slides.map((image, i) => (
+            <Slide
+              key={i}
+              active={position.index === i}
+              direction={position.order}
+              preview={image.file.url}
+              src={image.fluid.src}
+              srcSet={image.fluid.srcSet}
+              alt={image.title}
+              onClick={() => navigate(`/portfolio/${slug}`)}
+            />
+          ))
+        }
+      </Slider>
       <ButtonPrev
         name="previous"
         onClick={previousSlide}

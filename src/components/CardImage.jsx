@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import styled, { css } from 'styled-components';
-import { animated } from 'react-spring';
 
-import useImagePreload from '../hooks/useImagePreload';
+import { withImagePreload } from '../hoc/withImagePreload';
 
-const CardImage = animated(styled.img`
+const CardImage = styled.img`
   position: absolute;
   left: 0;
   top: 0;
@@ -16,16 +14,6 @@ const CardImage = animated(styled.img`
       filter: blur(20px);
     `
   }
-`);
+`;
 
-export default ({ src, preview, ...rest }) => {
-  const [image, isLoading] = useImagePreload(src, preview);
-
-  return (
-    <CardImage
-      src={image}
-      isLoading={isLoading}
-      {...rest}
-    />
-  );
-};
+export default withImagePreload(CardImage);

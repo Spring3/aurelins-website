@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { graphql } from 'gatsby';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import MainLayout from '../layouts/MainLayout';
+import { withImagePreload } from '../hoc/withImagePreload';
 
 const Wrapper = styled.article`
   padding: 2rem;
@@ -14,7 +15,7 @@ const Wrapper = styled.article`
   }
 `;
 
-const PreviewImage = styled.figure`
+const ImageWrapper = styled.figure`
   grid-column: span 6;
   grid-gap: 1rem;
   margin: 0;
@@ -22,16 +23,6 @@ const PreviewImage = styled.figure`
   div {
     position: sticky;
     top: 2rem;
-
-    img {
-      margin: auto;
-      height: auto;
-      max-height: 600px;
-      max-width: 100%;
-      object-fit: cover;
-      border-radius: 6px;
-      box-shadow: 0px 10px 15px 0px rgba(50, 50, 50, .3);
-    }
   }
 
   @media (max-width: 1200px) {
@@ -39,14 +30,28 @@ const PreviewImage = styled.figure`
     
     div {
       position: static;
-
-      img {
-        margin: none;
-        margin: auto;
-      }
     }
   }
 `;
+
+const PreviewImage = withImagePreload(styled.img`
+  margin: auto;
+  height: auto;
+  max-height: 600px;
+  max-width: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0px 10px 15px 0px rgba(50, 50, 50, .3);
+
+  ${({ isLoading }) => isLoading && css`
+    filter: blur(10px);
+  `}
+
+  @media(max-width: 1200px) {
+    margin: none;
+    margin: auto; 
+  }
+`);
 
 const Description = styled.div`
   color: #AAA;
@@ -74,15 +79,6 @@ const Images = styled.div`
   grid-template-rows: repeat(auto-fit, 200px);
   grid-gap: 1.5rem;
 
-  img {
-    height: 100%;
-    object-fit: contain !important;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .3s ease-in-out;
-    vertical-align: middle;
-  }
-
   @media (max-width: 777px) {
     grid-template-columns: repeat(auto-fit, 100px);
     grid-template-rows: repeat(auto-fit,100px);
@@ -90,15 +86,30 @@ const Images = styled.div`
   }
 `;
 
+const Image = withImagePreload(styled.img`
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .3s ease-in-out;
+  vertical-align: middle;
+
+  ${({ isLoading }) => isLoading && css`
+    filter: blur(10px);
+  `}
+`);
+
 export default ({ data: { contentfulPortfolioItem = {} } }) => {
   const { previewImage, images } = contentfulPortfolioItem;
   const [selectedImage, selectImage] = useState(previewImage);
   return (
     <MainLayout>
       <Wrapper>
-        <PreviewImage>
+        <ImageWrapper>
           <div>
-            <img
+            <PreviewImage
+              preview={selectedImage.file.url}
               src={selectedImage.fluid.src}
               srcSet={selectedImage.fluid.srcSet}
               sizes={selectedImage.fluid.sizes}
@@ -106,8 +117,9 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
             />
             <Images>
               { [previewImage, ...images.filter(image => image.title !== previewImage.title)].map(image => (
-                  <img
+                  <Image
                     onClick={() => selectImage(image)}
+                    preview={image.file.url}
                     className={image.title === selectedImage.title ? 'selected' : null}
                     key={image.title}
                     src={image.fluid.src}
@@ -118,7 +130,7 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
               }
             </Images>
           </div>
-        </PreviewImage>
+        </ImageWrapper>
         <Description>
           <h1>{contentfulPortfolioItem.title}</h1>
           <p>{contentfulPortfolioItem.description.internal.content}</p>
@@ -143,6 +155,9 @@ export const query = graphql`
       images {
         title
         description
+        file {
+          url
+        }
         fluid (maxWidth: 800) {
           src
           srcSet
@@ -162,6 +177,9 @@ export const query = graphql`
       previewImage {
         title
         description
+        file {
+          url
+        }
         fluid (maxWidth: 800) {
           src
           srcSet

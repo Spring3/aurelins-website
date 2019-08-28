@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { animated, useTransition } from 'react-spring';
+import { withImagePreload } from '../hoc/withImagePreload';
 
-const Slide = animated(styled.div`
+const Slide = withImagePreload(animated(styled.div`
   background: url("${props => props.image}") no-repeat center center;
   height: 100%;
   width: 100%;
@@ -11,7 +12,11 @@ const Slide = animated(styled.div`
   top: 0;
   z-index: -1;
   background-size: cover;
-`);
+
+  ${({ isLoading }) => isLoading && css `
+    filter: blur(10px);
+  `}
+`));
 
 export default (({ images }) => {
   const [index, setIndex] = useState(0);
@@ -24,6 +29,7 @@ export default (({ images }) => {
         img.src = image.file.url;
         return ({ style }) => (
           <Slide
+            preview={image.file.url}
             image={image.file.url}
             style={style}
           />
