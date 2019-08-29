@@ -9,7 +9,7 @@ import Card from '../components/Card';
 const Grid = styled.div`
   padding: 4rem 2rem 4rem 2rem;
   display: grid;
-  grid-gap: 1.5rem;
+  grid-gap: 1rem;
   grid-auto-flow: dense;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   grid-template-rows: repeat(auto-fill, minmax(15rem, 1fr));
@@ -60,6 +60,7 @@ export const query = graphql`
           tags
           slides
           slug
+          important
           images {
             title
             description

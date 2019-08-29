@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { Link } from 'gatsby';
 
 import ImageSlider from './ImageSlider';
@@ -12,6 +12,17 @@ const Card = styled.div`
   overflow: hidden;
   background: transparent;
   transition: background .3s ease-in-out;
+
+  ${props => props.important
+    ? css `
+      grid-column: span 2;
+      grid-row: span 2;
+    `
+    : css `
+      grid-column: span 1;
+      grid-row: span 1;
+    `
+  }
   
   h2 {
     margin: 0;
@@ -67,6 +78,11 @@ const Card = styled.div`
       opacity: 1;
     }
   }
+
+  @media (max-width: 591px) {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
 `;
 
 const TagList = styled.ul`
@@ -104,7 +120,10 @@ const months = [
 export default ({ data }) => {
   const createdAt = new Date(data.createdAt);
   return (
-    <Card slides={!!data.slides}>
+    <Card
+      slides={!!data.slides}
+      important={!!data.important}
+    >
       {
         !!data.slides
         ? (
