@@ -1,5 +1,5 @@
 import React, { Fragment, useState, useEffect, useRef } from 'react';
-import { Link } from 'gatsby';
+import { Link, useStaticQuery, graphql } from 'gatsby';
 import styled, { css, createGlobalStyle } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
 import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
@@ -37,7 +37,7 @@ const Header = animated(styled.header`
   margin-top: 2rem;
   margin-bottom: 4rem;
 
-  h4 {
+  h4, h3 {
     color: #AAA;
   }
 
@@ -268,6 +268,22 @@ export default ({ children }) => {
     ? isOpen ? [0] : [0, 0, .8]
     : isOpen ? [0, 0, 0, 0.38] : [0, 0.4, 0.4];
 
+  const data = useStaticQuery(
+    graphql`
+      query {
+        site {
+          siteMetadata {
+            title
+          }
+        }
+      }
+    `
+  );
+
+  useEffect(() => {
+    document.title = data.site.siteMetadata.title;
+  }, []);
+
   useEffect(() => {
     if (isMobile) {
       targetElement.current = document.querySelector('#nav-mobile');
@@ -320,6 +336,7 @@ export default ({ children }) => {
               style={sidebarContentAnimationProps}
             >
               <h2>Oleksandra Vasylenko</h2>
+              <h4>@Aurelins</h4>
               <h4>Student, 3D Artist</h4>
             </Header>
             <MenuList
@@ -362,6 +379,7 @@ export default ({ children }) => {
                 style={mobileSidebarAnimationProps}
                 id="nav-mobile"
               >
+                <h4>@Aurelins</h4>
                 <h4>Student, 3D Artist</h4>
                 <MenuList style={mobileSidebarContentAnimationProps}>
                   <li onClick={() => toggleSidebar(false)}>
