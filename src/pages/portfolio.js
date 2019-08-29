@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import 'normalize.css';
 import { graphql } from 'gatsby';
 import styled from 'styled-components';

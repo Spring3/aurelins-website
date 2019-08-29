@@ -1,7 +1,6 @@
 import React from 'react';
 import { graphql } from 'gatsby';
 import 'normalize.css';
-import styled from 'styled-components';
 
 import Layout from '../layouts/MainLayout';
 import Carousel from '../components/Carousel';

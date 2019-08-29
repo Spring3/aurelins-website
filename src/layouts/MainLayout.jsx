@@ -9,6 +9,7 @@ import { useChain, useSpring, animated } from 'react-spring';
 import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
 
 import useWindowResize from '../hooks/useWindowResize';
+import Footer from '../components/Footer';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -164,6 +165,9 @@ const MobileSidebarContent = animated(styled.div`
 const Main = animated(styled.main`
   padding-left: 22rem;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
   h1 {
     margin-top: 0px;
@@ -421,6 +425,7 @@ export default ({ children }) => {
         style={isMobile ? null : resetMainPaddingAnimationProps}
       >
         {children}
+        <Footer />
       </Main>
     </Fragment>
   );
