@@ -247,9 +247,8 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
 };
 
 export default ({ children }) => {
-  const screenWidth = useWindowResize();
+  const [screenWidth, isMobile] = useWindowResize();
   const targetElement = useRef(null);
-  const isMobile = screenWidth <= 900;
   const [isOpen, toggleSidebar] = useState(!isMobile);
   const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isOpen);
   const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isOpen);
@@ -307,6 +306,8 @@ export default ({ children }) => {
       : animationSequence.reverse(),
     timestamps
   );
+
+  const closeSidebar = () => toggleSidebar(false);
 
   const iconColor = 'white';
 
@@ -382,7 +383,7 @@ export default ({ children }) => {
                 <h4>@Aurelins</h4>
                 <h4>Student, 3D Artist</h4>
                 <MenuList style={mobileSidebarContentAnimationProps}>
-                  <li onClick={() => toggleSidebar(false)}>
+                  <li onClick={closeSidebar}>
                     <Link
                       to="/"
                       activeClassName="active"
@@ -390,7 +391,7 @@ export default ({ children }) => {
                       Home
                     </Link>
                   </li>
-                  <li onClick={() => toggleSidebar(false)}>
+                  <li onClick={closeSidebar}>
                     <Link
                       to="/portfolio"
                       activeClassName="active"
@@ -398,7 +399,7 @@ export default ({ children }) => {
                       Portfolio
                     </Link>
                   </li>
-                  <li onClick={() => toggleSidebar(false)}>
+                  <li onClick={closeSidebar}>
                     <Link
                       to="/contact"
                       activeClassName="active"

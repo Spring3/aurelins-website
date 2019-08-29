@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import 'normalize.css';
 import { graphql } from 'gatsby';
 import styled from 'styled-components';
+import InfiniteScroll from 'react-infinite-scroller';
 
 import Layout from '../layouts/MainLayout';
 import Card from '../components/Card';
@@ -17,40 +18,48 @@ const Grid = styled.div`
   @media (max-width: 900px) {
     margin-top: 100px;
   }
+
+  @media (max-width: 591px) {
+    padding: 2rem;
+    grid-gap: 2rem;
+  }
 `;
 
 export default ({ data }) => {
-  const { site = {}, allContentfulPortfolioItem = {} } = data || {};
+  const { allContentfulPortfolioItem = {} } = data || {};
   const items = allContentfulPortfolioItem.edges || [];
+  const [batch, setBatch] = useState(1);
+  const batchSize = 3;
+
   return (
     <Layout>
-      <Grid>
+      <InfiniteScroll
+        element={Grid}
+        pageStart={0}
+        loadMore={(page) => setBatch(page + 1)}
+        hasMore={batch * batchSize < items.length}
+      >
         {
-          items.map(({ node }) => (
+          items.slice(0, batch * batchSize).map(({ node }) => (
             <Card
               data={node}
               key={node.contentful_id}
             />
           ))
         }
-      </Grid>
+      </InfiniteScroll>
     </Layout>
   );
 }
 
+
 export const query = graphql`
   query AllPortfolioItems {
-    site {
-      siteMetadata {
-        title
-      }
-    }
     allContentfulPortfolioItem(
       sort: {
         fields: [createdAt],
         order: ASC
-      },
-      limit: 20
+      }
     ) {
       edges {
         node {
