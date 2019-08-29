@@ -2,16 +2,19 @@ import { useEffect, useState } from 'react';
 import throttle from 'lodash.throttle';
 
 const useWindowResize = () => {
-  const [width, setWidth] = useState(window.innerWidth);
+  const [width, setWidth] = useState();
 
   useEffect(() => {
-    const onResize = throttle(() => {
+    if (typeof window !== 'undefined') {
       setWidth(window.innerWidth);
-    }, 300);
+      const onResize = throttle(() => {
+        setWidth(window.innerWidth);
+      }, 300);
 
-    window.addEventListener('resize', onResize);
+      window.addEventListener('resize', onResize);
 
-    return () => window.removeEventListener('resize', onResize);
+      return () => window.removeEventListener('resize', onResize);
+    }
   }, []);
 
   const isMobile = width <= 900;
