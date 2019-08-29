@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { graphql } from 'gatsby';
 import styled, { css } from 'styled-components';
 
@@ -8,7 +8,7 @@ import { withImagePreload } from '../hoc/withImagePreload';
 const Wrapper = styled.article`
   padding: 2rem;
   display: grid;
-  grid-template-columns: repeat(11, minmax(20px, 1fr));
+  grid-template-columns: repeat(12, minmax(20px, 1fr));
 
   @media (max-width: 900px) {
     margin-top: 100px;
@@ -21,114 +21,83 @@ const ImageWrapper = styled.figure`
   margin: 0;
 
   div {
-    position: sticky;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     top: 2rem;
   }
 
   @media (max-width: 1200px) {
-    grid-column: span 11;
-    
-    div {
-      position: static;
-    }
+    grid-column: span 12;
   }
 `;
 
 const PreviewImage = withImagePreload(styled.img`
-  margin: auto;
+  margin-bottom: 2rem;
   height: auto;
   max-height: 600px;
   max-width: 100%;
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0px 10px 15px 0px rgba(50, 50, 50, .3);
+  
 
   ${({ isLoading }) => isLoading && css`
     filter: blur(10px);
   `}
-
-  @media(max-width: 1200px) {
-    margin: none;
-    margin: auto; 
-  }
 `);
 
 const Description = styled.div`
   color: #AAA;
-  grid-column: span 5;
-  padding: 0rem 2rem;
+  grid-column: span 6;
+  padding: 0rem 2rem 0rem 4rem;
 
   h1 {
     margin-top: 1rem;
+    position: sticky;
+    top: 2rem;
   }
   p {
     line-height: 1.5;
+    text-align: justify;
+    position: sticky;
+    top: 6rem;
+  }
+
+  @media (max-width: 1450px) {
+    grid-column: span 6;
   }
 
   @media (max-width: 1200px) {
-    grid-column: span 11;
+    grid-column: span 12;
     padding: 0;
   }
 `;
 
-const Images = styled.div`
-  margin-top: 1rem;
-  grid-area: i;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 200px);
-  grid-template-rows: repeat(auto-fit, 200px);
-  grid-gap: 1.5rem;
-
-  @media (max-width: 777px) {
-    grid-template-columns: repeat(auto-fit, 100px);
-    grid-template-rows: repeat(auto-fit,100px);
-    margin-bottom: 3rem;
-  }
-`;
-
-const Image = withImagePreload(styled.img`
-  height: 100%;
-  max-width: 100%;
-  object-fit: contain !important;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all .3s ease-in-out;
-  vertical-align: middle;
-
-  ${({ isLoading }) => isLoading && css`
-    filter: blur(10px);
-  `}
-`);
-
 export default ({ data: { contentfulPortfolioItem = {} } }) => {
   const { previewImage, images } = contentfulPortfolioItem;
-  const [selectedImage, selectImage] = useState(previewImage);
+  const [itemImages, setImages] = useState([]);
+
+  useEffect(() => {
+    setImages([previewImage, ...images.filter(image => image.title !== previewImage.title)]);
+  }, []);
+
   return (
     <MainLayout>
       <Wrapper>
         <ImageWrapper>
           <div>
-            <PreviewImage
-              preview={selectedImage.file.url}
-              src={selectedImage.fluid.src}
-              srcSet={selectedImage.fluid.srcSet}
-              sizes={selectedImage.fluid.sizes}
-              alt={selectedImage.description || selectedImage.title}
-            />
-            <Images>
-              { [previewImage, ...images.filter(image => image.title !== previewImage.title)].map(image => (
-                  <Image
-                    onClick={() => selectImage(image)}
-                    preview={image.file.url}
-                    className={image.title === selectedImage.title ? 'selected' : null}
-                    key={image.title}
-                    src={image.fluid.src}
-                    alt={image.description || image.title}
-                    width={200}
-                  />
-                ))
-              }
-            </Images>
+            {
+              itemImages.map((image) => (
+                <PreviewImage
+                  preview={image.file.url}
+                  src={image.fluid.src}
+                  srcSet={image.fluid.srcSet}
+                  sizes={image.fluid.sizes}
+                  alt={image.description || image.title}
+                />
+              ))
+            }
           </div>
         </ImageWrapper>
         <Description>
@@ -158,7 +127,7 @@ export const query = graphql`
         file {
           url
         }
-        fluid (maxWidth: 800) {
+        fluid (maxWidth: 800, quality: 80) {
           src
           srcSet
           sizes
@@ -180,7 +149,7 @@ export const query = graphql`
         file {
           url
         }
-        fluid (maxWidth: 800) {
+        fluid (maxWidth: 800, quality: 80) {
           src
           srcSet
           sizes

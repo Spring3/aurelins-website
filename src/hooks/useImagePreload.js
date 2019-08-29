@@ -8,10 +8,16 @@ const useImagePreload = (imageUrl, previewUrl) => {
     if (previewUrl && isLoading) {
       const img = new Image();
       img.onload = () => {
-        setLoading(false);
-        setImage(img.src);
+        if (isLoading) {
+          setLoading(false);
+          setImage(img.src);
+        }
       };
       img.src = imageUrl;
+      if (img.complete) {
+        setLoading(false);
+        setImage(img.src);
+      }
     }
   }, [imageUrl, previewUrl]);
 

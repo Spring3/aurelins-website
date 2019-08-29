@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { animated, useTransition } from 'react-spring';
+import { Transition } from 'react-transition-group';
+
 import { withImagePreload } from '../hoc/withImagePreload';
 
-const Slide = withImagePreload(animated(styled.div`
+const Slide = withImagePreload(styled.div`
   background: url("${props => props.image}") no-repeat center center;
   height: 100%;
   width: 100%;
@@ -14,61 +15,57 @@ const Slide = withImagePreload(animated(styled.div`
   background-size: cover;
 
   ${({ isLoading }) => isLoading && css `
-    filter: blur(10px);
+    filter: blur(20px);
   `}
-`));
+`);
 
 export default (({ images }) => {
   const [index, setIndex] = useState(0);
-  const [slides, setSlides] = useState([]);
-  
-  useEffect(
-    () => {
-      setSlides(images.map((image) => {
-        const img = new Image();
-        img.src = image.file.url;
-        return ({ style }) => (
-          <Slide
-            preview={image.file.url}
-            image={image.file.url}
-            style={style}
-          />
-        );
-      }))
-    },
-    [images]
-  );
 
   useEffect(
     () => {
       const timeout = setTimeout(() => {
-        const nextIndex = (index + 1) % slides.length;
+        const nextIndex = (index + 1) % images.length;
         setIndex(nextIndex);
       }, 7000);
       return () => clearTimeout(timeout);
     },
-    [index, slides]
+    [index]
   );
 
-  const transitions = useTransition(index, p => p, {
-    initial: {
+  const defaultStyles = {
+    opacity: 0,
+    transition: 'opacity 1s ease-in-out'
+  };
+
+  const transitions = {
+    entering: {
       opacity: 1
     },
-    from: {
+    entered: {
+      opacity: 1
+    },
+    exiting: {
       opacity: 0
     },
-    enter: {
-      opacity: 1
-    },
-    leave: {
+    exited: {
       opacity: 0
     }
-  });
+  };
 
-  return transitions.map(({ item, props, key }) => {
-    const Slide = slides[item];
-    return Slide
-      ? <Slide key={key} style={props} />
-      : null
-  });
+  return images.map((image, i) => (
+    <Transition in={i === index}>
+      {state => (
+        <Slide
+          key={i}
+          style={{
+            ...defaultStyles,
+            ...transitions[state]
+          }}
+          preview={image.file.url}
+          image={image.file.url}
+        />
+      )}
+    </Transition>
+  ));
 });

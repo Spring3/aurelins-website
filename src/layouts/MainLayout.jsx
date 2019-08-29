@@ -116,11 +116,11 @@ const SocialList = animated(styled.ul`
 const DesktopSidebar = animated(styled.aside`
   display: flex;
   top: 0px;
-  padding: 1rem 2rem;
+  padding: 2rem 2rem;
   background: rgba(20,20,20,.9);
   
   flex-direction: column;
-  height: calc(100vh - 2rem);
+  height: calc(100vh - 4rem);
   overflow: hidden;
   position: fixed;
   width: 16rem;
@@ -147,6 +147,7 @@ const MobileNav = styled.div`
 `;
 
 const MobileSidebarContent = animated(styled.div`
+  height: 0vh;
   overflow: hidden;
   overflow-y: scroll;
   scrollbar-width: none;
@@ -363,9 +364,30 @@ export default ({ children }) => {
               >
                 <h4>Student, 3D Artist</h4>
                 <MenuList style={mobileSidebarContentAnimationProps}>
-                  <li><Link to="/" activeClassName="active">Home</Link></li>
-                  <li><Link to="/portfolio" activeClassName="active">Portfolio</Link></li>
-                  <li><Link to="/contact" activeClassName="active">Contact</Link></li>
+                  <li onClick={() => toggleSidebar(false)}>
+                    <Link
+                      to="/"
+                      activeClassName="active"
+                    >
+                      Home
+                    </Link>
+                  </li>
+                  <li onClick={() => toggleSidebar(false)}>
+                    <Link
+                      to="/portfolio"
+                      activeClassName="active"
+                    >
+                      Portfolio
+                    </Link>
+                  </li>
+                  <li onClick={() => toggleSidebar(false)}>
+                    <Link
+                      to="/contact"
+                      activeClassName="active"
+                    >
+                      Contact
+                    </Link>
+                  </li>
                 </MenuList>
                 <SocialList style={mobileSidebarSocialAnimationProps}>
                   <li><InstagramIcon color={iconColor} /></li>
