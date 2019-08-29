@@ -181,6 +181,12 @@ const Main = animated(styled.main`
 const useSidebarAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      width: isSidebarOpen
+        ? 16 * 16
+        : 0,
+      background: isSidebarOpen ? 'rgba(20,20,20,.9)' : 'rgba(20,20,20,.0)'
+    },
     width: isSidebarOpen
       ? 16 * 16
       : 0,
@@ -193,6 +199,10 @@ const useSidebarAnimation = (isSidebarOpen) => {
 const useMobileSidebarAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      width: '100%',
+      height: isSidebarOpen ? '91.6vh' : '0vh'
+    },
     width: '100%',
     height: isSidebarOpen ? '91.6vh' : '0vh',
     ref: animationRef
@@ -203,6 +213,10 @@ const useMobileSidebarAnimation = (isSidebarOpen) => {
 const useSidebarContentAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      opacity: isSidebarOpen ? 1 : 0,
+      transform: isSidebarOpen ? 'translateY(0%)' : 'translateY(100%)'
+    },
     opacity: isSidebarOpen ? 1 : 0,
     transform: isSidebarOpen ? 'translateY(0%)' : 'translateY(100%)',
     ref: animationRef
@@ -213,6 +227,10 @@ const useSidebarContentAnimation = (isSidebarOpen) => {
 const useMobileSidebarContentAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      opacity: isSidebarOpen ? 1 : 0,
+      transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)'
+    },
     opacity: isSidebarOpen ? 1 : 0,
     transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)',
     ref: animationRef
@@ -223,6 +241,10 @@ const useMobileSidebarContentAnimation = (isSidebarOpen) => {
 const useMobileSidebarSocialAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      opacity: isSidebarOpen ? 1 : 0,
+      transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)'
+    },
     opacity: isSidebarOpen ? 1 : 0,
     transform: isSidebarOpen ? 'translateX(0%)' : 'translateX(-200%)',
     ref: animationRef
@@ -233,6 +255,9 @@ const useMobileSidebarSocialAnimation = (isSidebarOpen) => {
 const useCenterAlignAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      alignSelf: isSidebarOpen ? 'normal' : 'center'
+    },
     alignSelf: isSidebarOpen ? 'normal' : 'center',
     ref: animationRef
   });
@@ -242,6 +267,11 @@ const useCenterAlignAnimation = (isSidebarOpen) => {
 const useResetMainPaddingAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
   const props = useSpring({
+    from: {
+      paddingLeft: isSidebarOpen
+        ? 16 * 22
+        : 16 * 6
+    },
     paddingLeft: isSidebarOpen
       ? 16 * 22
       : 16 * 6,
@@ -253,7 +283,7 @@ const useResetMainPaddingAnimation = (isSidebarOpen) => {
 export default ({ children }) => {
   const [screenWidth, isMobile] = useWindowResize();
   const targetElement = useRef(null);
-  const [isOpen, toggleSidebar] = useState(!isMobile);
+  const [isOpen, toggleSidebar] = useState(false);
   const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isOpen);
   const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isOpen);
   const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isOpen);
@@ -283,6 +313,13 @@ export default ({ children }) => {
     `
   );
 
+  // restoring the saved state of the sidebar
+  useEffect(() => {
+    const savedSidebarState = typeof window !== 'undefined' && window.sessionStorage.getItem('sidebar');
+    console.log('state', typeof savedSidebarState === 'string' ? savedSidebarState === 'true' : !isMobile);
+    toggleSidebar(typeof savedSidebarState === 'string' ? savedSidebarState === 'true' : !isMobile);
+  }, []);
+
   useEffect(() => {
     document.title = data.site.siteMetadata.title;
   }, []);
@@ -311,7 +348,10 @@ export default ({ children }) => {
     timestamps
   );
 
-  const closeSidebar = () => toggleSidebar(false);
+  const onSidebarClick = () => {
+    toggleSidebar(!isOpen);
+    typeof window !== 'undefined' && window.sessionStorage.setItem('sidebar', !isOpen);
+  }
 
   const iconColor = 'white';
 
@@ -328,7 +368,7 @@ export default ({ children }) => {
               style={centerAlignAnimationProps}
             >
               <button
-                onClick={() => toggleSidebar(!isOpen)}
+                onClick={onSidebarClick}
               >
                 {
                   isOpen
@@ -370,7 +410,7 @@ export default ({ children }) => {
                 </Header>
                 <BurgerWrapper>
                   <button
-                    onClick={() => toggleSidebar(!isOpen)}
+                    onClick={onSidebarClick}
                   >
                     {
                       isOpen
@@ -387,7 +427,7 @@ export default ({ children }) => {
                 <h4>@Aurelins</h4>
                 <h4>Student, 3D Artist</h4>
                 <MenuList style={mobileSidebarContentAnimationProps}>
-                  <li onClick={closeSidebar}>
+                  <li onClick={onSidebarClick}>
                     <Link
                       to="/"
                       activeClassName="active"
@@ -395,7 +435,7 @@ export default ({ children }) => {
                       Home
                     </Link>
                   </li>
-                  <li onClick={closeSidebar}>
+                  <li onClick={onSidebarClick}>
                     <Link
                       to="/portfolio"
                       activeClassName="active"
@@ -403,7 +443,7 @@ export default ({ children }) => {
                       Portfolio
                     </Link>
                   </li>
-                  <li onClick={closeSidebar}>
+                  <li onClick={onSidebarClick}>
                     <Link
                       to="/contact"
                       activeClassName="active"
