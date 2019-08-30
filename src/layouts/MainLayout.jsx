@@ -392,8 +392,24 @@ export default ({ children }) => {
               <li><Link to="/contact" activeClassName="active">Contact</Link></li>
             </MenuList>
             <SocialList isOpen={isOpen}>
-              <li><InstagramIcon color={iconColor} /></li>
-              <li><EmailOutlineIcon color={iconColor} /></li>
+              <li>
+                <a
+                  href="https://www.instagram.com/aurelins_3d.artist"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <InstagramIcon color={iconColor} />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:aurelins@gmail.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <EmailOutlineIcon color={iconColor} />
+                </a>
+              </li>
             </SocialList>
           </DesktopSidebar>
         )
@@ -453,8 +469,24 @@ export default ({ children }) => {
                   </li>
                 </MenuList>
                 <SocialList style={mobileSidebarSocialAnimationProps}>
-                  <li><InstagramIcon color={iconColor} /></li>
-                  <li><EmailOutlineIcon color={iconColor} /></li>
+                  <li>
+                    <a
+                      href="https://www.instagram.com/aurelins_3d.artist"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <InstagramIcon color={iconColor} />
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="mailto:aurelins@gmail.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <EmailOutlineIcon color={iconColor} />
+                    </a>
+                  </li>
                 </SocialList>
               </MobileSidebarContent>
             </MobileSidebar>
