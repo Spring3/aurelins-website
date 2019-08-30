@@ -4,6 +4,7 @@ import styled, { css } from 'styled-components';
 
 import MainLayout from '../layouts/MainLayout';
 import { withImagePreload } from '../hoc/withImagePreload';
+import OGP from '../components/OGP';
 
 const Wrapper = styled.article`
   padding: 2rem;
@@ -88,6 +89,11 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
 
   return (
     <MainLayout>
+      <OGP
+        title={contentfulPortfolioItem.title}
+        description={contentfulPortfolioItem.description}
+        image={previewImage.fluid.src}
+      />
       <Wrapper>
         <ImageWrapper>
           <div>

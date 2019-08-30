@@ -6,6 +6,7 @@ import InfiniteScroll from 'react-infinite-scroller';
 
 import Layout from '../layouts/MainLayout';
 import Card from '../components/Card';
+import OGP from '../components/OGP';
 
 const Grid = styled.div`
   padding: 4rem 2rem 4rem 2rem;
@@ -26,13 +27,18 @@ const Grid = styled.div`
 `;
 
 export default ({ data }) => {
-  const { allContentfulPortfolioItem = {} } = data || {};
+  const { site = {}, allContentfulPortfolioItem = {} } = data || {};
   const items = allContentfulPortfolioItem.edges || [];
   const [batch, setBatch] = useState(1);
   const batchSize = 3;
 
   return (
     <Layout>
+      <OGP
+        title={site.siteMetadata.title}
+        description="Portfolio page"
+        image={items[0].node.previewImage.fluid.src}
+      />
       <InfiniteScroll
         element={Grid}
         pageStart={0}
@@ -55,6 +61,11 @@ export default ({ data }) => {
 
 export const query = graphql`
   query AllPortfolioItems {
+    site {
+      siteMetadata {
+        title
+      }
+    }
     allContentfulPortfolioItem(
       sort: {
         fields: [createdAt],
