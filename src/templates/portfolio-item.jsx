@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { graphql } from 'gatsby';
 import styled, { css } from 'styled-components';
+import {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  BoxGeometry,
+  MeshBasicMaterial,
+  HemisphereLight,
+  Mesh
+} from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
+import OrbitControls from 'orbit-controls-es6';
 
 import MainLayout from '../layouts/MainLayout';
 import { withImagePreload } from '../hoc/withImagePreload';
@@ -79,12 +91,104 @@ const Description = styled.div`
   }
 `;
 
+let camera;
+let scene;
+let renderer;
+let geometry;
+let material;
+let light;
+let loader;
+let dracoLoader;
+let controls;
+
 export default ({ data: { contentfulPortfolioItem = {} } }) => {
   const { previewImage, images } = contentfulPortfolioItem;
   const [itemImages, setImages] = useState([]);
 
   useEffect(() => {
     setImages([previewImage, ...images.filter(image => image.title !== previewImage.title)]);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      scene = new Scene();
+      camera = new PerspectiveCamera(75, 1, 1, 1000);
+      camera.position.set(0, 0, 500);
+      
+      renderer = new WebGLRenderer({
+        antialias: true
+      });
+
+      renderer.gammaOutput = true;
+      renderer.gammaFactor = 2.2;
+      renderer.setClearColor(0x808080);
+      renderer.setSize(1000, 1000);
+
+      loader = new GLTFLoader();
+      dracoLoader = new DRACOLoader();
+      loader.setDRACOLoader(dracoLoader);
+      
+
+      light = new HemisphereLight( 0xffffbb, 0x080820, 1 );
+      scene.add(light);
+
+      window.document.body.appendChild(renderer.domElement);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enabled = true;
+      controls.maxDistance = 1500;
+      controls.minDistance = 0;
+
+      loader.load(
+        contentfulPortfolioItem.modelFile[0].file.url,
+        (gltf) => {
+          scene.add(gltf.scene);
+
+          // gltf.animations; // Array<THREE.AnimationClip>
+          // gltf.scene; // THREE.Scene
+          // gltf.scenes; // Array<THREE.Scene>
+          // gltf.cameras; // Array<THREE.Camera>
+          // gltf.asset; 
+        },
+        (xhr) => {
+          console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+        },
+        (error) => {
+          console.error(error);
+        }
+      );
+
+      // geometry = new BoxGeometry(1, 1, 1);
+      // material = new MeshBasicMaterial({ color: '0x00ff00' });
+      // var cube = new Mesh(geometry, material);
+
+      // scene.add(gltf.scene);
+
+      // camera.position.z = 5;
+
+      function resize(renderer) {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+
+      function animate() {
+        if (resize(renderer)) {
+          camera.aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+
+    }
   }, []);
 
   return (
