@@ -189,7 +189,6 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
           const mesh = gltf.scene.children.find(child => child.type === 'Mesh');
           if (mesh) {
             group.add(mesh);
-            console.log('mesh', mesh);
             // mesh.geometry.setRotationFromEuler(new Euler(0, 0, 0));
             const _wireframe = new WireframeGeometry(mesh.geometry);
             const line = new LineSegments(_wireframe);
@@ -202,10 +201,13 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
             line.material.transparent = true;
             wireframe.current = line;
           } else {
-            const group = gltf.scene.children.find(child => child.type === 'Group');
-            for (let i = 0; i < group.length; i++) {
-              const child = group[i];
+            const wrapper = gltf.scene.children.find(child => child.type === 'Group');
+            const wireframeGroup = new Group();
+
+            const children = Array.prototype.slice.call(wrapper.children);
+            for (const child of children) {
               if (child.type === 'Mesh') {
+                group.add(child);
                 const wireframe = new WireframeGeometry(child.geometry);
                 const line = new LineSegments(wireframe);
                 line.material.depthTest = false;
@@ -214,11 +216,12 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
                 // line.position.set(0, 0, 0);
                 // line.rotation.set(0, 0, 0);
                 line.material.transparent = true;
-                
-                scene.current.add(line);
-                scene.current.add(child);
+
+                wireframeGroup.add(line);
               }
             }
+
+            wireframe.current = wireframeGroup;
           }
           meshGroup.current = group;
         },
