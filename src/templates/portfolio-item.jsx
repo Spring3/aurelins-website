@@ -181,48 +181,42 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
       controls.maxDistance = 1500;
       controls.minDistance = 100;
 
+      function toWireframe(children) {
+        let wireframes = [];
+        children.forEach((child) => {
+          console.log('child.type', child.type);
+          console.log('child', child);
+          if (child.type === 'Mesh') {
+            const wireframe = new WireframeGeometry(child.geometry);
+            const line = new LineSegments(wireframe);
+            line.material.depthTest = false;
+            line.material.opacity = .5;
+            line.rotateX(Math.PI / 2);
+            line.material.transparent = true;
+            wireframes.push(line);
+          } else if (child.type === 'Group') {
+            wireframes = wireframes.concat(toWireframe(child.children));
+          }
+        });
+        return wireframes;
+      }
+
       loader.current.load(
         url,
         gltf => {
           const group = new Group();
           scene.current.add(group);
-          const mesh = gltf.scene.children.find(child => child.type === 'Mesh');
-          if (mesh) {
-            group.add(mesh);
-            // mesh.geometry.setRotationFromEuler(new Euler(0, 0, 0));
-            const _wireframe = new WireframeGeometry(mesh.geometry);
-            const line = new LineSegments(_wireframe);
-            line.material.depthTest = false;
-            line.material.opacity = .5;
-            line.rotateX(Math.PI / 2);
-            // line.setRotationFromEuler(new Euler(Math.PI / 2, 0, 0));
-            // line.position.set(0, 0, 0);
-            // line.rotation.set(0, 0, 0);
-            line.material.transparent = true;
-            wireframe.current = line;
-          } else {
-            const wrapper = gltf.scene.children.find(child => child.type === 'Group');
-            const wireframeGroup = new Group();
+          
+          const wireframeGroup = new Group();
+          const wireframes = toWireframe(gltf.scene.children);
+          wireframes.forEach(child => wireframeGroup.add(child));
+          wireframe.current = wireframeGroup;
 
-            const children = Array.prototype.slice.call(wrapper.children);
-            for (const child of children) {
-              if (child.type === 'Mesh') {
-                group.add(child);
-                const wireframe = new WireframeGeometry(child.geometry);
-                const line = new LineSegments(wireframe);
-                line.material.depthTest = false;
-                line.material.opacity = .5;
-                line.rotateX(Math.PI / 2);
-                // line.position.set(0, 0, 0);
-                // line.rotation.set(0, 0, 0);
-                line.material.transparent = true;
+          const whitelist = ['Mesh', 'Group'];
+          gltf.scene.children
+            .filter(child => whitelist.includes(child.type))
+            .forEach(child => group.add(child));
 
-                wireframeGroup.add(line);
-              }
-            }
-
-            wireframe.current = wireframeGroup;
-          }
           meshGroup.current = group;
         },
         xhr => {
