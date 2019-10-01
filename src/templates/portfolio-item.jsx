@@ -192,6 +192,7 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
             const line = new LineSegments(wireframe);
             line.material.depthTest = false;
             line.material.opacity = .5;
+            line.material.color = new Color(0xBA20BB);
             line.rotateX(Math.PI / 2);
             line.material.transparent = true;
             wireframes.push(line);
