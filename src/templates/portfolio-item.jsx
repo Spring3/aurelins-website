@@ -21,7 +21,9 @@ import {
   WireframeGeometry,
   LineSegments,
   Group,
-  Raycaster
+  Raycaster,
+  Matrix4,
+  AxesHelper
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
@@ -131,7 +133,7 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const _scene = new Scene();
-      const _camera = new PerspectiveCamera(50, 1, 1, 2000);
+      const _camera = new PerspectiveCamera(50, 1, 1, 10000);
       _camera.position.set(0, 0, 1000);
       
       const _renderer = new WebGLRenderer({
@@ -180,7 +182,6 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
       controls.enableDamping = true;      
       controls.dampingFactor = .05;
       controls.rotateSpeed = .1;
-      controls.maxDistance = 1500;
       controls.minDistance = 100;
 
       function toWireframe(children) {
@@ -199,6 +200,21 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
           }
         });
         return wireframes;
+      }
+
+      function fitCameraVertically(modelHeight, maxVerticalView) {
+        const cameraFovRad = camera.current.fov * Math.PI / 180;
+        let newDistanceFromCamera = camera.current.position.z;
+        if (modelHeight > maxVerticalView || modelHeight < maxVerticalView * .85) {
+          newDistanceFromCamera = Math.abs(modelHeight / 2 / Math.tan(cameraFovRad / 2));
+        }
+
+        if (newDistanceFromCamera < controls.minDistance) {
+          controls.minDistance = newDistanceFromCamera;
+        }
+        controls.maxDistance = newDistanceFromCamera + 1000;
+
+        camera.current.position.set(camera.current.position.x, camera.current.position.y + modelHeight, newDistanceFromCamera);
       }
 
       loader.current.load(
@@ -221,20 +237,18 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
           console.log('model size', modelSize);
           const distance = camera.current.position.distanceTo(group.position);
           console.log('distance', distance);
-          const maxVerticalView = Math.abs(Math.tan(camera.current.fov) * distance);
-          console.log('maxVerticalView', maxVerticalView * 2);
-          if (modelSize.x > maxVerticalView) {
-            const newCameraDistance = Math.abs((modelSize.x / 2) / Math.tan(camera.current.fov));
-            console.log('new distance', newCameraDistance);
-            camera.current.position.set(camera.current.position.x, camera.current.position.y, newCameraDistance);
-          } else if (modelSize.x / maxVerticalView < .95) {
-            const newCameraDistance = Math.abs((modelSize.x / 2) / Math.tan(camera.current.fov));
-            console.log('new distance', newCameraDistance);
-            if (newCameraDistance < controls.minDistance) {
-              controls.minDistance = newCameraDistance;
-            }
-            camera.current.position.set(camera.current.position.x, camera.current.position.y, newCameraDistance);
+          // the max vertical size of an object that can fit into camera fov from camera center to camera top of the viewport
+          const maxVerticalView = Math.abs(Math.tan(camera.current.fov / 2 * Math.PI / 180) * distance) * 2;
+          console.log('maxVerticalView', maxVerticalView);
+          if (modelSize.y > modelSize.x) {
+            fitCameraVertically(modelSize.y, maxVerticalView);
+            group.position.y -= modelSize.y / 2;
+            wireframeGroup.position.y -= modelSize.y / 2;
+          } else {
+
           }
+          
+          camera.current.lookAt(group.position);
           meshGroup.current = group;
         },
         xhr => {
