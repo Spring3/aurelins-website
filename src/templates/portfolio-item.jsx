@@ -4,26 +4,20 @@ import styled, { css } from 'styled-components';
 import {
   Scene,
   Color,
-  Euler,
   Box3,
   PerspectiveCamera,
   WebGLRenderer,
-  BoxGeometry,
-  BoxHelper,
-  MeshBasicMaterial,
   HemisphereLight,
-  DirectionalLight,
   Mesh,
-  Vector3,
-  Texture,
-  TextureLoader,
-  RepeatWrapping,
   WireframeGeometry,
   LineSegments,
   Group,
-  Raycaster,
-  Matrix4,
-  AxesHelper
+  Vector3,
+  DoubleSide,
+  PointLight,
+  PlaneGeometry,
+  MeshBasicMaterial,
+  LightShadow
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
@@ -221,6 +215,7 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
       loader.current.load(
         url,
         gltf => {
+          console.log('gltf', gltf);
           const group = new Group();
           scene.current.add(group);
           
@@ -246,10 +241,25 @@ const useModelPreview = (url, shouldRender, shouldShowWireframe) => {
 
           group.position.y -= modelSize.y / 2;
           wireframeGroup.position.y -= modelSize.y / 2;
-          camera.current.position.set(camera.current.position.x, camera.current.position.y + modelSize.y, newDistanceFromCamera);
+          camera.current.position.set(camera.current.position.x, camera.current.position.y, newDistanceFromCamera);
           
           camera.current.lookAt(group.position);
           meshGroup.current = group;
+
+          const plane = new Mesh(
+            new PlaneGeometry(modelSize.x, modelSize.x),
+            new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide })
+          );
+          plane.castShadow = false;
+          plane.receiveShadow = true;
+          plane.position.set(group.position.x, group.position.y, group.position.z);
+          plane.rotateX(Math.PI / 2);
+          scene.current.add(plane);
+
+          const pointLight = new PointLight(0xffffff, 3, 100);
+          pointLight.position.set(modelSize.x, modelSize.y + 50, modelSize.z);
+          pointLight.shadow = new LightShadow(camera.current);
+          scene.current.add(pointLight);
         },
         xhr => {
           const progress = xhr.loaded / xhr.total * 100;
