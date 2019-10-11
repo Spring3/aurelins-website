@@ -22,7 +22,7 @@ const ImageWrapper = styled.figure`
   grid-gap: 1rem;
   margin: 0;
 
-  div {
+  div:first-child {
     display: flex;
     flex-direction: column;
     align-items: center;

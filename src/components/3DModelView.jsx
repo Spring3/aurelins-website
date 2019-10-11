@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
-import styled from 'styled-components';
+import React, { Fragment, useState, useEffect, useRef, memo } from 'react';
+import styled, { css } from 'styled-components';
 import {
   Scene,
   Color,
@@ -21,6 +21,10 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import OrbitControls from 'orbit-controls-es6';
+import CubeOutlineIcon from 'mdi-react/CubeOutlineIcon';
+import GridIcon from 'mdi-react/GridIcon';
+
+import Progressbar from './Progressbar';
 
 const CanvasWrapper = styled.div`
   canvas {
@@ -30,6 +34,35 @@ const CanvasWrapper = styled.div`
     border-radius: 5px;
   }
   margin-top: 2rem;
+  min-height: ${props => `${props.minHeight || 0}px`};
+  background: #111;
+  border-radius: 5px;
+  position: relative;
+  align-items: center;
+  ${(props) => !props.wasRenderTriggered && css `
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  `}
+`;
+
+const RenderButton = styled.button`
+  background: #0C0C0C;
+  border: 2px solid #555;
+  box-shadow: 0px 0px 30px black;
+  border-radius: 5px;
+  padding: 1.5rem;
+  position: relative;
+  cursor: pointer;
+
+  svg {
+    vertical-align: middle;
+  }
+
+  &:hover {
+    box-shadow: none;
+    border-color: white;
+  }
 `;
 
 const toRadian = (value) => value * Math.PI / 180;
@@ -65,6 +98,8 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
       renderer.gammaOutput = true;
       renderer.gammaFactor = 2;
       renderer.setSize(1000, 1000);
+      renderer.setClearColor(0x1F1F1F);
+      renderer.setClearAlpha(.9);
 
       const loader = new GLTFLoader();
 
@@ -300,14 +335,28 @@ export default memo(({ src }) => {
   }, [renderInfo.isLoaded]);
 
   return (
-    <CanvasWrapper id="canvasWrapper">
+    <CanvasWrapper
+      id="canvasWrapper"
+      minHeight={!renderInfo.isLoaded ? 500 : 0}
+    >
       {
-        wasRenderTriggered === false
+        !renderInfo.isLoaded
         ? (
-          <button onClick={() => triggerRender(true)}>Render</button>
+          <Fragment>
+            <RenderButton
+              onClick={() => triggerRender(true)}
+            >
+              <CubeOutlineIcon color="white" size={40} />
+            </RenderButton>  
+            <Progressbar progress={renderInfo.progress} />
+          </Fragment>
         )
         : (
-          <button onClick={() => triggerWireframe(!isWireframeDisplayed)}>Wireframe</button>
+          <button
+            onClick={() => triggerWireframe(!isWireframeDisplayed)}
+          >
+            <GridIcon color="white" />
+          </button>
         )
       }
     </CanvasWrapper>
