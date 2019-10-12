@@ -23,6 +23,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import OrbitControls from 'orbit-controls-es6';
 import CubeOutlineIcon from 'mdi-react/CubeOutlineIcon';
 import GridIcon from 'mdi-react/GridIcon';
+import LayersOutlineIcon from 'mdi-react/LayersOutlineIcon';
 
 import Progressbar from './Progressbar';
 
@@ -39,6 +40,7 @@ const CanvasWrapper = styled.div`
   border-radius: 5px;
   position: relative;
   align-items: center;
+  transition: width ease .5s;
   ${(props) => !props.wasRenderTriggered && css `
     display: flex;
     flex-direction: column;
@@ -65,9 +67,34 @@ const RenderButton = styled.button`
   }
 `;
 
+const OptionsBar = styled.div`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  border-radius: 5px;
+  padding: 1rem;
+  background: rgba(0,0,0,.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  button {
+    margin-top: 12px;
+  }
+
+  button:first-child {
+    margin-top: 0px;
+  }
+`;
+
+const OptionsButton = styled(RenderButton)`
+  padding: 0rem;
+  box-shadow: none;
+`;
+
 const toRadian = (value) => value * Math.PI / 180;
 
-const useModelPreview = (url, { shouldRender, showWireframe }) => {
+const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
   const data = useRef({
     camera: undefined,
     controls: undefined,
@@ -142,6 +169,7 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
 
       function composeWireframe(modelComponents) {
         let wireframes = [];
+        console.log('modelComponents', modelComponents);
         modelComponents.forEach((component) => {
           if (component.type === 'Mesh') {
             const wireframeGeometry = new WireframeGeometry(component.geometry);
@@ -200,11 +228,12 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
       function zoomCameraViewportOnModel(modelSize, maxViewportSize) {
         const { camera, controls } = data.current;
         const cameraFOVRad = toRadian(camera.fov);
-        const isModelTooSmallInTheViewport = modelSize < maxViewportSize * .85;
+        const isModelTooSmallInTheViewport = modelSize < maxViewportSize * .75;
         let newCameraDistance = camera.position.z;
 
         if (modelSize > maxViewportSize || isModelTooSmallInTheViewport) {
-          newCameraDistance = Math.abs(modelSize / 2 / Math.tan(cameraFOVRad / 2));
+          const desiredSize = modelSize * 1.25; // 75 % of viewport
+          newCameraDistance = Math.abs(desiredSize / 2 / Math.tan(cameraFOVRad / 2));
         }
 
         if (newCameraDistance < controls.minDistance) {
@@ -213,19 +242,6 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
         controls.maxDistance = newCameraDistance + 1000;
 
         return newCameraDistance;
-      }
-
-      function addPlane(size, position) {
-        const { scene } = data.current;
-        const plane = new Mesh(
-          new PlaneGeometry(size, size),
-          new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide })
-        );
-        plane.castShadow = false;
-        plane.receiveShadow = true;
-        plane.position.set(position.x, position.y, position.z);
-        plane.rotateX(Math.PI / 2);
-        scene.add(plane);
       }
 
       function addAdditionalLight(position) {
@@ -238,18 +254,19 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
       loader.load(
         url,
         gltf => {
-          console.log('gltf', gltf);
           const modelMeshes = new Group();
           modelMeshes.name = 'ModelMeshes';
           scene.add(modelMeshes);
 
+          const sceneChildren = Array.prototype.slice.call(gltf.scene.children).filter(child => child.type === 'Group' || child.type === 'Mesh');
+          
           const wireframeGroup = new Group();
           wireframeGroup.name = 'Wireframes';
-          const wireframes = composeWireframe(gltf.scene.children);
+          const wireframes = composeWireframe(sceneChildren);
           wireframes.forEach(child => wireframeGroup.add(child));
           data.current.wireframe = wireframeGroup;
-
-          gltf.scene.children.forEach((child) => {
+          
+          sceneChildren.forEach((child) => {
             if (child.type === 'Mesh' || child.type === 'Group') {
               modelMeshes.add(child);
             }
@@ -271,7 +288,6 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
           camera.lookAt(modelMeshes.position);
           data.current.meshes = modelMeshes;
 
-          addPlane(modelSize.x, modelMeshes.position);
           addAdditionalLight(new Vector3(modelSize.x, modelSize.y + 50, modelSize.z));
         },
         xhr => {
@@ -313,18 +329,40 @@ const useModelPreview = (url, { shouldRender, showWireframe }) => {
     }
   }, [showWireframe]);
 
+  useEffect(() => {
+    const { scene, meshes } = data.current;
+    if (showPlane) {
+      const meshSize = new Box3().setFromObject(meshes).getSize();
+      const planeSize = meshSize.x * 2;
+      const plane = new Mesh(
+        new PlaneGeometry(planeSize, planeSize),
+        new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide })
+      );
+      plane.name = 'Plane';
+      plane.castShadow = false;
+      plane.receiveShadow = true;
+      plane.position.set(meshes.position.x, meshes.position.y, meshes.position.z);
+      plane.rotateX(Math.PI / 2);
+      scene.add(plane);
+    } else {
+      scene.remove(scene.children.find(c => c.name === 'Plane'));
+    }
+  }, [showPlane])
+
   return [component, renderInfo];
 }
 
 export default memo(({ src }) => {
   const [wasRenderTriggered, triggerRender] = useState(false);
   const [isWireframeDisplayed, triggerWireframe] = useState(false);
+  const [showPlane, triggerPlane] = useState(false);
 
   const [canvas, renderInfo] = useModelPreview(
     src,
     { 
       shouldRender: wasRenderTriggered,
-      showWireframe: isWireframeDisplayed
+      showWireframe: isWireframeDisplayed,
+      showPlane: showPlane
     }
   );
 
@@ -352,11 +390,18 @@ export default memo(({ src }) => {
           </Fragment>
         )
         : (
-          <button
-            onClick={() => triggerWireframe(!isWireframeDisplayed)}
-          >
-            <GridIcon color="white" />
-          </button>
+          <OptionsBar>
+            <OptionsButton
+              onClick={() => triggerWireframe(!isWireframeDisplayed)}
+            >
+              <GridIcon color="white" />
+            </OptionsButton>
+            <OptionsButton
+              onClick={() => triggerPlane(!showPlane)}
+            >
+              <LayersOutlineIcon color="white" />
+            </OptionsButton>
+          </OptionsBar>
         )
       }
     </CanvasWrapper>

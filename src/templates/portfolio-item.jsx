@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { graphql } from 'gatsby';
 import styled, { css } from 'styled-components';
 
@@ -22,7 +22,7 @@ const ImageWrapper = styled.figure`
   grid-gap: 1rem;
   margin: 0;
 
-  div:first-child {
+  div.images {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -97,7 +97,7 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
       />
       <Wrapper>
         <ImageWrapper>
-          <div>
+          <div className="images">
             {
               itemImages.map((image) => (
                 <PreviewImage
