@@ -152,7 +152,7 @@ export default ({ data }) => {
       <div className="info">
         <h2>{data.title}</h2>
         <TagList>
-          {data.tags.map((tag, i) => (<li key={i}>{tag}</li>))}
+          {(data.tags || []).map((tag, i) => (<li key={i}>{tag}</li>))}
         </TagList>
       </div>
     </Card>

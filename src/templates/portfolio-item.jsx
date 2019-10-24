@@ -110,7 +110,7 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
               ))
             }
           </div>
-          <ModelView src={contentfulPortfolioItem.modelFile[0].file.url} />
+          <ModelView src={contentfulPortfolioItem.model.file.url} />
         </ImageWrapper>
         <Description>
           <div>
@@ -161,13 +161,12 @@ export const query = graphql`
           sizes
         }
       }
-      modelFile {
+      model {
         title
         description
         file {
           url
           fileName
-          contentType
         }
       }
     }

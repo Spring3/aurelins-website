@@ -125,8 +125,7 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
       renderer.gammaOutput = true;
       renderer.gammaFactor = 2;
       renderer.setSize(1000, 1000);
-      renderer.setClearColor(0x1F1F1F);
-      renderer.setClearAlpha(.9);
+      renderer.setClearColor(0x1F1F1F, .9);
 
       const loader = new GLTFLoader();
 
@@ -169,7 +168,6 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
 
       function composeWireframe(modelComponents) {
         let wireframes = [];
-        console.log('modelComponents', modelComponents);
         modelComponents.forEach((component) => {
           if (component.type === 'Mesh') {
             const wireframeGeometry = new WireframeGeometry(component.geometry);
@@ -292,7 +290,6 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
         },
         xhr => {
           const progress = xhr.loaded / xhr.total * 100;
-          console.log(`${progress}% loaded`);
           const isLoaded = progress === 100;
           if (isLoaded) {
             setComponent(data.current.renderer.domElement);
