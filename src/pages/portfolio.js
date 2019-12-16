@@ -77,9 +77,7 @@ export const query = graphql`
           title
           contentful_id
           createdAt
-          tags
           slides
-          slug
           important
           images {
             title

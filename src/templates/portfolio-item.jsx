@@ -125,8 +125,9 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
 
 export const query = graphql`
   query getPortfolioItem($slug: String!) {
-    contentfulPortfolioItem (slug: { eq: $slug }) {
+    contentfulPortfolioItem (id: { eq: $slug }) {
       id
+      contentful_id
       images {
         title
         description
@@ -144,11 +145,9 @@ export const query = graphql`
           content
         }
       }
-      slug
       title
       createdAt
       updatedAt
-      tags
       previewImage {
         title
         description
