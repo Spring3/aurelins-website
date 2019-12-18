@@ -4,6 +4,7 @@ import {
   Scene,
   Color,
   Box3,
+  AmbientLight,
   PerspectiveCamera,
   WebGLRenderer,
   HemisphereLight,
@@ -94,259 +95,254 @@ const OptionsButton = styled(RenderButton)`
 
 const toRadian = (value) => value * Math.PI / 180;
 
+function composeWireframe(modelComponents) {
+  let wireframes = [];
+  modelComponents.forEach((component) => {
+    if (component.type === 'Mesh') {
+      const wireframeGeometry = new WireframeGeometry(component.geometry);
+      const wireframe = new LineSegments(wireframeGeometry);
+      wireframe.material.depthTest = false;
+      wireframe.material.opacity = .5;
+      wireframe.material.color = new Color(0xBA20BB);
+      wireframe.material.transparent = true;
+      wireframe.rotateX(Math.PI / 2);
+      wireframes.push(wireframe);
+      if (component.children.length) {
+        wireframes = wireframes.concat(composeWireframe(component.children));
+      }
+    } else if (component.type === 'Group' || component.type === 'Object3D') {
+      wireframes = wireframes.concat(composeWireframe(component.children));
+    }
+  });
+  return wireframes;
+}
+
+/**
+  *  Quick math to not forget wtf is happening
+  * 
+  *               / |   C - distance from camera to the model
+  *             /   |     
+  *            /    | <- B - max model size that fits the viewPort (maxViewportSize)    
+  * (camera) /____C_|
+  *      (fov)\     | \ 0 /    )
+  *             \   |   |      ) -> (modelSize)
+  *               \ |  | |     )
+  * We set a rule that the model must always fit at least 85% of camera's viewport
+  * fov is the angle of camera's viewport
+  * Since we know the fov in radians, we know current distance and maxViewportSize
+  * We can calculate the new distance from camera to model on which the model will
+  * fit the viewport
+  * 
+  * Distance splits the viewport into 2 triangles, so it's easy to calculate
+  * the new distance by making sure that HALF the model size fits HALF the viewport
+  * We can do so from a formula of a tan of half the fov in radians
+  * 
+  * Tan (fov /2) = B / 2 / C
+  *
+  * If the model is bigger that current maxViewportSize (B) or smaller than 85% of it
+  * Then we take the new maxViewportSize for the model size
+  * and get the new distance from the formula above
+  * 
+  *                /  | \       /  )
+  *              /    |  \ ( ) /   )
+  *            /      |     |      )
+  * (camera) /__new C_|     |      ) -> new B (maxViewportSize = modelSize)
+  *      (fov)\       |    \  \    )
+  *             \     |    |  |    )
+  *               \   |    |  |    )
+  * 
+  * New C = modelSize / 2 / tan(fov / 2)
+  * We abs it cause tan can be negative, but distance can't be
+  * 
+*/
+function zoomCameraViewportOnModel(controls, camera, modelSize, maxViewportSize) {
+  const cameraFOVRad = toRadian(camera.fov);
+  const isModelTooSmallInTheViewport = modelSize < maxViewportSize * .75;
+  let newCameraDistance = camera.position.z;
+  if (modelSize > maxViewportSize || isModelTooSmallInTheViewport) {
+    const desiredSize = modelSize * 1.25; // 75 % of viewport
+    newCameraDistance = Math.abs(desiredSize / 2 / Math.tan(cameraFOVRad / 2));
+  }
+  if (newCameraDistance < controls.minDistance) {
+    controls.minDistance = newCameraDistance;
+  }
+  controls.maxDistance = newCameraDistance + 1000;
+  return newCameraDistance;
+}
+
+function addAdditionalLight(scene, position) {
+  const pointLight = new PointLight(0xffffff, 3, 100);
+  pointLight.position.set(position.x, position.y, position.z);
+
+  scene.add(pointLight);
+}
+
+// for SSR w/ gatsby
+const renderer = typeof document !== 'undefined' && new WebGLRenderer({
+  antialias: true
+});
+if (renderer) {
+  renderer.shadowMap.enabled = true;
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.gammaOutput = true;
+  renderer.gammaFactor = 2;
+  renderer.setSize(1000, 1000);
+  renderer.setClearColor(0x1F1F1F, .9);
+}
+
+const canvas = renderer.domElement;
+const camera = new PerspectiveCamera(50, 1, 1, 10000);
+camera.position.set(0, 0, 1000);
+
+// for SSR w/ gatsby
+const controls = typeof document !== 'undefined' && new OrbitControls(camera, canvas);
+if (controls) {
+  controls.enabled = true;
+  controls.enableKeys = false;
+  controls.enableDamping = true;
+  controls.dampingFactor = .05;
+  controls.rotateSpeed = .1;
+  controls.minDistance = 100;
+}
+
+let animationId;
+
 const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
   const data = useRef({
-    camera: undefined,
-    controls: undefined,
-    renderer: undefined,
-    loader: undefined,
-    scene: undefined,
-    wireframe: undefined,
-    meshes: undefined
+    camera: null,
+    controls: null,
+    scene: null,
+    wireframe: new Group(),
+    meshes: new Group()
   });
 
   const [component, setComponent] = useState();
-  const [renderInfo, updateRenderInfo] = useState({
-    isLoaded: false,
-    progress: 0
-  });
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isInitialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const scene = new Scene();
-      const camera = new PerspectiveCamera(50, 1, 1, 10000);
-      camera.position.set(0, 0, 1000);
-
-      const renderer = new WebGLRenderer({
-        antialias: true
-      });
-      renderer.shadowMap.enabled = true;
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.gammaOutput = true;
-      renderer.gammaFactor = 2;
-      renderer.setSize(1000, 1000);
-      renderer.setClearColor(0x1F1F1F, .9);
-
-      const loader = new GLTFLoader();
-
-      const dracoLoader = new DRACOLoader();
-      loader.setDRACOLoader(dracoLoader);
-
-      const hemisphereLight = new HemisphereLight(0xffffff, 0x808080, 1);
-      
-      scene.add(hemisphereLight);
-
-      data.current.scene = scene;
-      data.current.camera = camera;
-      data.current.renderer = renderer;
-      data.current.loader = loader;
-    }
-
-    return () => {
-      const { renderer } = data.current;
-      const canvas = renderer.domElement;
-      canvas.parentNode.removeChild(canvas);
-      renderer.clear();
-      renderer.dispose();
-      data.current.scene = new Scene();
-    };
-  }, []);
+  const isLoaded = loadingProgress === 100;
 
   useEffect(() => {
     if (shouldRender) {
-      const { renderer, camera, loader, scene } = data.current;
-      const canvas = renderer.domElement;
+      if (!isLoaded) {
+        const loader = new GLTFLoader();
+        const dracoLoader = new DRACOLoader();
+        loader.setDRACOLoader(dracoLoader);
 
-      const controls = new OrbitControls(camera, canvas);
-      controls.enabled = true;
-      controls.enableKeys = false;
-      controls.enableDamping = true;
-      controls.dampingFactor = .05;
-      controls.rotateSpeed = .1;
-      controls.minDistance = 100;
-      data.current.controls = controls;
+        loader.load(
+          url,
+          gltf => {
+            const { scene } = gltf;
+            data.current.scene = scene;
+            const { meshes, wireframe } = data.current;
+            meshes.name = 'ModelMeshes';
+            wireframe.name = 'Wireframes';
+            console.log('gltf', gltf);
 
-      function composeWireframe(modelComponents) {
-        let wireframes = [];
-        modelComponents.forEach((component) => {
-          if (component.type === 'Mesh') {
-            const wireframeGeometry = new WireframeGeometry(component.geometry);
-            const wireframe = new LineSegments(wireframeGeometry);
-            wireframe.material.depthTest = false;
-            wireframe.material.opacity = .5;
-            wireframe.material.color = new Color(0xBA20BB);
-            wireframe.material.transparent = true;
-            wireframe.rotateX(Math.PI / 2);
-            wireframes.push(wireframe);
-          } else if (component.type === 'Group') {
-            wireframes = wireframes.concat(composeWireframe(component.children));
-          }
-        });
-        return wireframes;
-      }
+            const sceneChildren = Array.prototype.slice.call(gltf.scene.children)
+              .filter(child => child.type === 'Group' || child.type === 'Mesh' || child.type === 'Object3D');
 
-      /**
-        *  Quick math to not forget wtf is happening
-        * 
-        *               / |   C - distance from camera to the model
-        *             /   |     
-        *            /    | <- B - max model size that fits the viewPort (maxViewportSize)    
-        * (camera) /____C_|
-        *      (fov)\     | \ 0 /    )
-        *             \   |   |      ) -> (modelSize)
-        *               \ |  | |     )
-        * We set a rule that the model must always fit at least 85% of camera's viewport
-        * fov is the angle of camera's viewport
-        * Since we know the fov in radians, we know current distance and maxViewportSize
-        * We can calculate the new distance from camera to model on which the model will
-        * fit the viewport
-        * 
-        * Distance splits the viewport into 2 triangles, so it's easy to calculate
-        * the new distance by making sure that HALF the model size fits HALF the viewport
-        * We can do so from a formula of a tan of half the fov in radians
-        * 
-        * Tan (fov /2) = B / 2 / C
-        *
-        * If the model is bigger that current maxViewportSize (B) or smaller than 85% of it
-        * Then we take the new maxViewportSize for the model size
-        * and get the new distance from the formula above
-        * 
-        *                /  | \       /  )
-        *              /    |  \ ( ) /   )
-        *            /      |     |      )
-        * (camera) /__new C_|     |      ) -> new B (maxViewportSize = modelSize)
-        *      (fov)\       |    \  \    )
-        *             \     |    |  |    )
-        *               \   |    |  |    )
-        * 
-        * New C = modelSize / 2 / tan(fov / 2)
-        * We abs it cause tan can be negative, but distance can't be
-        * 
-      */
-      function zoomCameraViewportOnModel(modelSize, maxViewportSize) {
-        const { camera, controls } = data.current;
-        const cameraFOVRad = toRadian(camera.fov);
-        const isModelTooSmallInTheViewport = modelSize < maxViewportSize * .75;
-        let newCameraDistance = camera.position.z;
+            scene.add(new HemisphereLight(0xffffff, 0x808080, 1));
+            scene.add(meshes);
+            
+            const wireframes = composeWireframe(sceneChildren);
+            wireframes.forEach(child => wireframe.add(child));
+            
+            sceneChildren.forEach((child) => {
+              if (child.type === 'Mesh' || child.type === 'Group' || child.type === 'Object3D') {
+                meshes.add(child);
+                scene.remove(child);
+              }
+            });
 
-        if (modelSize > maxViewportSize || isModelTooSmallInTheViewport) {
-          const desiredSize = modelSize * 1.25; // 75 % of viewport
-          newCameraDistance = Math.abs(desiredSize / 2 / Math.tan(cameraFOVRad / 2));
-        }
+            const modelSize = new Box3().setFromObject(meshes).getSize();
+            const cameraDistance = camera.position.distanceTo(meshes.position);
+            // the max model size that can fit into the camera's fov
+            const maxSize = Math.abs(Math.tan(toRadian(camera.fov / 2) * cameraDistance) * 2);
+            const newCameraDistance = modelSize.y > modelSize.x
+              ? zoomCameraViewportOnModel(controls, camera, modelSize.y, maxSize)
+              : zoomCameraViewportOnModel(controls, camera, modelSize.x, maxSize);
 
-        if (newCameraDistance < controls.minDistance) {
-          controls.minDistance = newCameraDistance;
-        }
-        controls.maxDistance = newCameraDistance + 1000;
+            // make sure that Vector3.zero is in the middle of the model
+            meshes.position.y -= modelSize.y / 2;
+            wireframe.position.y -= modelSize.y / 2;
 
-        return newCameraDistance;
-      }
+            camera.position.set(camera.position.x, camera.position.y, newCameraDistance);
+            camera.lookAt(meshes.position);
 
-      function addAdditionalLight(position) {
-        const { scene } = data.current;
-        const pointLight = new PointLight(0xffffff, 3, 100);
-        pointLight.position.set(position.x, position.y, position.z);
-        scene.add(pointLight);
-      }
+            addAdditionalLight(scene, new Vector3(modelSize.x, modelSize.y + 50, modelSize.z));
 
-      loader.load(
-        url,
-        gltf => {
-          const modelMeshes = new Group();
-          modelMeshes.name = 'ModelMeshes';
-          scene.add(modelMeshes);
+            const animate = () => {
+              animationId = requestAnimationFrame(animate);
+              controls.update();
+              renderer.render(scene, camera);
+            };
 
-          const sceneChildren = Array.prototype.slice.call(gltf.scene.children).filter(child => child.type === 'Group' || child.type === 'Mesh');
-          
-          const wireframeGroup = new Group();
-          wireframeGroup.name = 'Wireframes';
-          const wireframes = composeWireframe(sceneChildren);
-          wireframes.forEach(child => wireframeGroup.add(child));
-          data.current.wireframe = wireframeGroup;
-          
-          sceneChildren.forEach((child) => {
-            if (child.type === 'Mesh' || child.type === 'Group') {
-              modelMeshes.add(child);
+            animate();
+            setInitialized(true);
+          },
+          xhr => {
+            const progress = xhr.loaded / xhr.total * 100;
+            if (progress === 100) {
+              setComponent(renderer.domElement);
             }
-          });
-
-          const modelSize = new Box3().setFromObject(modelMeshes).getSize();
-          const cameraDistance = camera.position.distanceTo(modelMeshes.position);
-          // the max model size that can fit into the camera's fov
-          const maxSize = Math.abs(Math.tan(toRadian(camera.fov / 2) * cameraDistance) * 2);
-          const newCameraDistance = modelSize.y > modelSize.x
-            ? zoomCameraViewportOnModel(modelSize.y, maxSize)
-            : zoomCameraViewportOnModel(modelSize.x, maxSize);
-
-          // make sure that Vector3.zero is in the middle of the model
-          modelMeshes.position.y -= modelSize.y / 2;
-          wireframeGroup.position.y -= modelSize.y / 2;
-
-          camera.position.set(camera.position.x, camera.position.y, newCameraDistance);
-          camera.lookAt(modelMeshes.position);
-          data.current.meshes = modelMeshes;
-
-          addAdditionalLight(new Vector3(modelSize.x, modelSize.y + 50, modelSize.z));
-        },
-        xhr => {
-          const progress = xhr.loaded / xhr.total * 100;
-          const isLoaded = progress === 100;
-          if (isLoaded) {
-            setComponent(data.current.renderer.domElement);
-          }
-          updateRenderInfo({
-            isLoaded,
-            progress
-          });
-        },
-        error => console.error(error)
-      );
-
-      function animate() {
-        const { controls, renderer, scene, camera } = data.current;
-        requestAnimationFrame(animate);
-        if (controls) {
-          controls.update();
-        }
-        renderer.render(scene, camera);
+            setLoadingProgress(progress);
+          },
+          error => console.error(error)
+        );
       }
-
-      animate();
     }
-  }, [shouldRender]);
+    return () => {
+      if (isInitialized) {
+        cancelAnimationFrame(animationId);
+        const { scene } = data.current;
+        scene.dispose();
+        renderer.dispose();
+        renderer.clear();
+        const canvas = renderer.domElement;
+        if (canvas.parentNode) {
+          canvas.parentNode.removeChild(canvas);
+        }
+      }
+    }
+  }, [url, shouldRender, isLoaded, isInitialized]);
 
   useEffect(() => {
-    const { scene, meshes, wireframe } = data.current;
-    if (showWireframe) {
-      scene.remove(meshes);
-      scene.add(wireframe);
-    } else {
-      scene.remove(wireframe);
-      scene.add(meshes);
+    if (isInitialized) {
+      const { scene, meshes, wireframe } = data.current;
+      if (showWireframe) {
+        scene.remove(meshes);
+        scene.add(wireframe);
+      } else {
+        scene.remove(wireframe);
+        scene.add(meshes);
+      }
     }
-  }, [showWireframe]);
+  }, [showWireframe, isInitialized]);
 
   useEffect(() => {
-    const { scene, meshes } = data.current;
-    if (showPlane) {
-      const meshSize = new Box3().setFromObject(meshes).getSize();
-      const planeSize = meshSize.x * 2;
-      const plane = new Mesh(
-        new PlaneGeometry(planeSize, planeSize),
-        new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide })
-      );
-      plane.name = 'Plane';
-      plane.castShadow = false;
-      plane.receiveShadow = true;
-      plane.position.set(meshes.position.x, meshes.position.y, meshes.position.z);
-      plane.rotateX(Math.PI / 2);
-      scene.add(plane);
-    } else {
-      scene.remove(scene.children.find(c => c.name === 'Plane'));
+    if (isInitialized) {
+      const { scene, meshes } = data.current;
+      if (showPlane) {
+        const meshSize = new Box3().setFromObject(meshes).getSize();
+        const planeSize = meshSize.x * 2;
+        const plane = new Mesh(
+          new PlaneGeometry(planeSize, planeSize),
+          new MeshBasicMaterial({ color: 0xffffff, side: DoubleSide })
+        );
+        plane.name = 'Plane';
+        plane.castShadow = false;
+        plane.receiveShadow = true;
+        plane.position.set(meshes.position.x, meshes.position.y, meshes.position.z);
+        plane.rotateX(Math.PI / 2);
+        scene.add(plane);
+      } else {
+        scene.remove(scene.children.find(c => c.name === 'Plane'));
+      }
     }
-  }, [showPlane])
+  }, [showPlane, isInitialized]);
 
-  return [component, renderInfo];
+  return [component, loadingProgress];
 }
 
 export default memo(({ src }) => {
@@ -354,7 +350,7 @@ export default memo(({ src }) => {
   const [isWireframeDisplayed, triggerWireframe] = useState(false);
   const [showPlane, triggerPlane] = useState(false);
 
-  const [canvas, renderInfo] = useModelPreview(
+  const [canvas, loadingProgress] = useModelPreview(
     src,
     { 
       shouldRender: wasRenderTriggered,
@@ -363,19 +359,21 @@ export default memo(({ src }) => {
     }
   );
 
+  const isLoaded = loadingProgress === 100;
+
   useEffect(() => {
-    if (typeof document !== 'undefined' && renderInfo.isLoaded) {
+    if (typeof document !== 'undefined' && isLoaded) {
       document.getElementById('canvasWrapper').appendChild(canvas);
     }
-  }, [renderInfo.isLoaded]);
+  }, [isLoaded]);
 
   return (
     <CanvasWrapper
       id="canvasWrapper"
-      minHeight={!renderInfo.isLoaded ? 500 : 0}
+      minHeight={!isLoaded ? 500 : 0}
     >
       {
-        !renderInfo.isLoaded
+        !isLoaded
         ? (
           <Fragment>
             <RenderButton
@@ -383,7 +381,7 @@ export default memo(({ src }) => {
             >
               <CubeOutlineIcon color="white" size={40} />
             </RenderButton>  
-            <Progressbar progress={renderInfo.progress} />
+            <Progressbar progress={loadingProgress} />
           </Fragment>
         )
         : (

@@ -23,7 +23,7 @@ export default ({ data }) => {
         image={items[0].node.images[0].file.url}
       />
       <Carousel images={images} />
-      { /* to have footer automatically pushed to the bottom of the page */ }
+      { /* to have footer be automatically pushed to the bottom of the page */ }
       <Filler />
     </Layout>
   );

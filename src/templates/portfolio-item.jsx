@@ -99,8 +99,9 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
         <ImageWrapper>
           <div className="images">
             {
-              itemImages.map((image) => (
+              itemImages.map((image, i) => (
                 <PreviewImage
+                  key={i}
                   preview={image.file.url}
                   src={image.fluid.src}
                   srcSet={image.fluid.srcSet}

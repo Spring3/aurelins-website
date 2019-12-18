@@ -18,8 +18,11 @@ const Progress = styled.span`
   margin-top: 6px;
 `;
 
-const Bar = styled.div`
-  width: ${props => props.progress || 0}%;
+const Bar = styled.div.attrs(props => ({
+  style: {
+    width: (props.progress || 0) + '%'
+  }
+}))`
   height: 2px;
   background: white;
   position: absolute;
