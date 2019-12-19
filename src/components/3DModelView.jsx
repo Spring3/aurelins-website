@@ -1,7 +1,6 @@
 import React, { Fragment, useState, useEffect, useRef, memo } from 'react';
 import styled, { css } from 'styled-components';
 import {
-  Scene,
   Color,
   Box3,
   AmbientLight,
@@ -96,7 +95,7 @@ const OptionsButton = styled(RenderButton)`
 const toRadian = (value) => value * Math.PI / 180;
 
 function composeWireframe(modelComponents) {
-  let wireframes = [];
+  const wireframes = new Group();
   modelComponents.forEach((component) => {
     if (component.type === 'Mesh') {
       const wireframeGeometry = new WireframeGeometry(component.geometry);
@@ -105,13 +104,23 @@ function composeWireframe(modelComponents) {
       wireframe.material.opacity = .5;
       wireframe.material.color = new Color(0xBA20BB);
       wireframe.material.transparent = true;
-      wireframe.rotateX(Math.PI / 2);
-      wireframes.push(wireframe);
+      wireframe.castShadow = true;
+      wireframe.receiveShadow = true;
+      wireframe.position.set(component.position.x, component.position.y, component.position.z);
+      wireframe.rotation.set(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.order);
+      wireframe.scale.set(component.scale.x, component.scale.y, component.scale.z);
+      // wireframe.rotateX(Math.PI / 2);
+      wireframes.add(wireframe);
+      // wireframes.applyMatrix(component.matrix);
       if (component.children.length) {
-        wireframes = wireframes.concat(composeWireframe(component.children));
+        wireframes.add(composeWireframe(component.children));
       }
-    } else if (component.type === 'Group' || component.type === 'Object3D') {
-      wireframes = wireframes.concat(composeWireframe(component.children));
+    } else if ((component.type === 'Group' || component.type === 'Object3D') && component.children.length) {
+      const wireframe = composeWireframe(component.children);
+      wireframe.position.set(component.position.x, component.position.y, component.position.z);
+      wireframe.rotation.set(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.order);
+      wireframe.scale.set(component.scale.x, component.scale.y, component.scale.z);
+      wireframes.add(wireframe);
     }
   });
   return wireframes;
@@ -202,7 +211,8 @@ if (controls) {
   controls.enableDamping = true;
   controls.dampingFactor = .05;
   controls.rotateSpeed = .1;
-  controls.minDistance = 100;
+  controls.minDistance = .1;
+  // controls.minDistance = 100;
 }
 
 let animationId;
@@ -212,7 +222,7 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
     camera: null,
     controls: null,
     scene: null,
-    wireframe: new Group(),
+    wireframe: null,
     meshes: new Group()
   });
 
@@ -234,26 +244,27 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
           gltf => {
             const { scene } = gltf;
             data.current.scene = scene;
-            const { meshes, wireframe } = data.current;
+            const { meshes } = data.current;
             meshes.name = 'ModelMeshes';
-            wireframe.name = 'Wireframes';
             console.log('gltf', gltf);
 
             const sceneChildren = Array.prototype.slice.call(gltf.scene.children)
-              .filter(child => child.type === 'Group' || child.type === 'Mesh' || child.type === 'Object3D');
+              .filter(child => (child.type === 'Group' || child.type === 'Object3D' && child.children.length) || child.type === 'Mesh');
 
             scene.add(new HemisphereLight(0xffffff, 0x808080, 1));
-            scene.add(meshes);
             
-            const wireframes = composeWireframe(sceneChildren);
-            wireframes.forEach(child => wireframe.add(child));
+            const wireframe = composeWireframe(sceneChildren);
+            wireframe.name = 'Wireframes';
+            data.current.wireframe = wireframe;
             
             sceneChildren.forEach((child) => {
-              if (child.type === 'Mesh' || child.type === 'Group' || child.type === 'Object3D') {
+              if (child.type === 'Mesh' || (child.type === 'Group' || child.type === 'Object3D' && child.children.length)) {
                 meshes.add(child);
                 scene.remove(child);
               }
             });
+
+            scene.add(meshes);
 
             const modelSize = new Box3().setFromObject(meshes).getSize();
             const cameraDistance = camera.position.distanceTo(meshes.position);
@@ -263,9 +274,6 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
               ? zoomCameraViewportOnModel(controls, camera, modelSize.y, maxSize)
               : zoomCameraViewportOnModel(controls, camera, modelSize.x, maxSize);
 
-            // make sure that Vector3.zero is in the middle of the model
-            meshes.position.y -= modelSize.y / 2;
-            wireframe.position.y -= modelSize.y / 2;
 
             camera.position.set(camera.position.x, camera.position.y, newCameraDistance);
             camera.lookAt(meshes.position);
@@ -333,7 +341,7 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
         plane.name = 'Plane';
         plane.castShadow = false;
         plane.receiveShadow = true;
-        plane.position.set(meshes.position.x, meshes.position.y, meshes.position.z);
+        plane.position.set(meshes.position.x, meshes.position.y - meshSize.y / 2, meshes.position.z);
         plane.rotateX(Math.PI / 2);
         scene.add(plane);
       } else {
