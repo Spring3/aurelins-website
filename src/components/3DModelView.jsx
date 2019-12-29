@@ -32,8 +32,11 @@ const CanvasWrapper = styled.div`
     width: auto !important;
     height: auto !important;
     max-width: 100%;
+    max-height: 100%;
     border-radius: 5px;
+    overflow: none;
   }
+  overflow: none;
   margin-top: 2rem;
   min-height: ${props => `${props.minHeight || 0}px`};
   background: #111;
@@ -109,9 +112,7 @@ function composeWireframe(modelComponents) {
       wireframe.position.set(component.position.x, component.position.y, component.position.z);
       wireframe.rotation.set(component.rotation.x, component.rotation.y, component.rotation.z, component.rotation.order);
       wireframe.scale.set(component.scale.x, component.scale.y, component.scale.z);
-      // wireframe.rotateX(Math.PI / 2);
       wireframes.add(wireframe);
-      // wireframes.applyMatrix(component.matrix);
       if (component.children.length) {
         wireframes.add(composeWireframe(component.children));
       }
@@ -211,8 +212,8 @@ if (controls) {
   controls.enableDamping = true;
   controls.dampingFactor = .05;
   controls.rotateSpeed = .1;
-  controls.minDistance = .1;
-  // controls.minDistance = 100;
+  // controls.minDistance = .1;
+  controls.minDistance = 50;
 }
 
 let animationId;
@@ -246,7 +247,6 @@ const useModelPreview = (url, { shouldRender, showWireframe, showPlane }) => {
             data.current.scene = scene;
             const { meshes } = data.current;
             meshes.name = 'ModelMeshes';
-            console.log('gltf', gltf);
 
             const sceneChildren = Array.prototype.slice.call(gltf.scene.children)
               .filter(child => (child.type === 'Group' || child.type === 'Object3D' && child.children.length) || child.type === 'Mesh');
@@ -379,6 +379,8 @@ export default memo(({ src }) => {
     <CanvasWrapper
       id="canvasWrapper"
       minHeight={!isLoaded ? 500 : 0}
+      maxHeight={typeof window !== 'undefined' && window.innerHeight * .9}
+      wasRenderTriggered={wasRenderTriggered && isLoaded}
     >
       {
         !isLoaded
