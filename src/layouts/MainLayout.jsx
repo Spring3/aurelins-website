@@ -18,18 +18,18 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const BurgerWrapper = animated(styled.div`
+const BurgerWrapper = styled.div`
   display: flex;
-  justify-content: flex-end;
-  align-items: center;  
+  justify-content: center;
+  align-items: center;
+`;
 
-  button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    svg {
-      vertical-align: middle;
-    }
+const BurgerButton = animated(styled.button`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  svg {
+    vertical-align: middle;
   }
 `);
 
@@ -86,12 +86,11 @@ const MenuList = animated(styled.ul`
 `);
 
 const SocialList = animated(styled.ul`
-  justify-self: flex-end;
+  justify-self: center;
   list-style-type: none;
   margin: 0;
   padding: 0;
   display: flex;
-  transition: all .3s ease-in-out;
 
   li {
     margin-right: 1rem;
@@ -100,7 +99,6 @@ const SocialList = animated(styled.ul`
   @media (min-width: 901px) {
     ${props => !props.isOpen && css`
       flex-direction: column;
-      align-self: center;
       li {
         margin-right: 0;
         margin-top: 1rem;
@@ -254,11 +252,25 @@ const useMobileSidebarSocialAnimation = (isSidebarOpen) => {
 
 const useCenterAlignAnimation = (isSidebarOpen) => {
   const animationRef = useRef();
+  const px = 256 / 2 - 2 * 16;
   const props = useSpring({
     from: {
-      alignSelf: isSidebarOpen ? 'normal' : 'center'
+      transform: isSidebarOpen ? `translateX(${px}px)` : 'translateX(0px)'
     },
-    alignSelf: isSidebarOpen ? 'normal' : 'center',
+    transform: isSidebarOpen ? `translateX(${px}px)` : 'translateX(0px)',
+    ref: animationRef
+  });
+  return [animationRef, props];
+}
+
+const useCenterAlignAnimationSocial = (isSidebarOpen) => {
+  const animationRef = useRef();
+  const px = -.75 * 16;
+  const props = useSpring({
+    from: {
+      transform: isSidebarOpen ? 'translateX(0px)' : `translateX(${px}px)`
+    },
+    transform: isSidebarOpen ? 'translateX(0px)' : `translateX(${px}px)`,
     ref: animationRef
   });
   return [animationRef, props];
@@ -287,6 +299,7 @@ export default ({ children }) => {
   const [sidebarAnimationRef, sidebarAnimationProps] = useSidebarAnimation(isOpen);
   const [sidebarContentAnimationRef, sidebarContentAnimationProps] = useSidebarContentAnimation(isOpen);
   const [centerAlignAnimationRef, centerAlignAnimationProps] = useCenterAlignAnimation(isOpen);
+  const [centerAlignAnimationSocialRef, centerAlignAnimationSocialProps] = useCenterAlignAnimationSocial(isOpen);
   const [resetMainPaddingAnimationRef, resetMainPaddingAnimationProps] = useResetMainPaddingAnimation(isOpen);
 
   const [mobileSidebarAnimationRef, mobileSidebarAnimationProps] = useMobileSidebarAnimation(isOpen);
@@ -294,12 +307,12 @@ export default ({ children }) => {
   const [mobileSidebarSocialAnimationRef, mobileSidebarSocialAnimationProps] = useMobileSidebarSocialAnimation(isOpen);
   
   const animationSequence = isMobile
-    ? [mobileSidebarAnimationRef, mobileSidebarContentAnimationRef, mobileSidebarSocialAnimationRef]
-    : [centerAlignAnimationRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef];
+    ? [mobileSidebarAnimationRef, mobileSidebarContentAnimationRef, centerAlignAnimationSocialRef, mobileSidebarSocialAnimationRef]
+    : [centerAlignAnimationRef, centerAlignAnimationSocialRef, sidebarAnimationRef, resetMainPaddingAnimationRef, sidebarContentAnimationRef];
 
   const timestamps = isMobile
-    ? isOpen ? [0] : [0, 0, .8]
-    : isOpen ? [0, 0, 0, 0.38] : [0, 0.4, 0.4];
+    ? isOpen ? [0] : [0, 0, 0, .8]
+    : isOpen ? [0, 0, 0, 0, 0.38] : [0, 0.4, 0.4, 0.4];
 
   const data = useStaticQuery(
     graphql`
@@ -364,18 +377,17 @@ export default ({ children }) => {
             style={sidebarAnimationProps}
             isOpen={isOpen}
           >
-            <BurgerWrapper
-              style={centerAlignAnimationProps}
-            >
-              <button
+            <BurgerWrapper>
+              <BurgerButton
                 onClick={onSidebarClick}
+                style={centerAlignAnimationProps}
               >
                 {
                   isOpen
                     ? (<CloseIcon color={iconColor} size={26} />)
                     : (<MenuIcon color={iconColor} size={26} />)
                 }
-              </button>
+              </BurgerButton>
             </BurgerWrapper>
             <Header
               style={sidebarContentAnimationProps}
@@ -389,11 +401,29 @@ export default ({ children }) => {
             >
               <li><Link to="/" activeClassName="active">Home</Link></li>
               <li><Link to="/portfolio" activeClassName="active">Portfolio</Link></li>
-              <li><Link to="/contact" activeClassName="active">Contact</Link></li>
             </MenuList>
-            <SocialList isOpen={isOpen}>
-              <li><InstagramIcon color={iconColor} /></li>
-              <li><EmailOutlineIcon color={iconColor} /></li>
+            <SocialList
+              isOpen={isOpen}
+              style={centerAlignAnimationSocialProps}
+            >
+              <li>
+                <a
+                  href="https://www.instagram.com/aurelins_3d.artist"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <InstagramIcon color={iconColor} />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:aurelins@gmail.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <EmailOutlineIcon color={iconColor} />
+                </a>
+              </li>
             </SocialList>
           </DesktopSidebar>
         )
@@ -409,7 +439,7 @@ export default ({ children }) => {
                   <h2><Link to="/">Oleksandra Vasylenko</Link></h2>
                 </Header>
                 <BurgerWrapper>
-                  <button
+                  <BurgerButton
                     onClick={onSidebarClick}
                   >
                     {
@@ -417,7 +447,7 @@ export default ({ children }) => {
                         ? (<CloseIcon color={iconColor} size={26} />)
                         : (<MenuIcon color={iconColor} size={26} />)
                     }
-                  </button>
+                  </BurgerButton>
                 </BurgerWrapper>
               </MobileNav>
               <MobileSidebarContent
@@ -453,8 +483,24 @@ export default ({ children }) => {
                   </li>
                 </MenuList>
                 <SocialList style={mobileSidebarSocialAnimationProps}>
-                  <li><InstagramIcon color={iconColor} /></li>
-                  <li><EmailOutlineIcon color={iconColor} /></li>
+                  <li>
+                    <a
+                      href="https://www.instagram.com/aurelins_3d.artist"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <InstagramIcon color={iconColor} />
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="mailto:aurelins@gmail.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <EmailOutlineIcon color={iconColor} />
+                    </a>
+                  </li>
                 </SocialList>
               </MobileSidebarContent>
             </MobileSidebar>

@@ -4,6 +4,8 @@ import styled, { css } from 'styled-components';
 
 import MainLayout from '../layouts/MainLayout';
 import { withImagePreload } from '../hoc/withImagePreload';
+import OGP from '../components/OGP';
+import ModelView from '../components/3DModelView';
 
 const Wrapper = styled.article`
   padding: 2rem;
@@ -20,7 +22,7 @@ const ImageWrapper = styled.figure`
   grid-gap: 1rem;
   margin: 0;
 
-  div {
+  .images {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -88,12 +90,18 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
 
   return (
     <MainLayout>
+      <OGP
+        title={contentfulPortfolioItem.title}
+        description={contentfulPortfolioItem.description}
+        image={previewImage.fluid.src}
+      />
       <Wrapper>
         <ImageWrapper>
-          <div>
+          <div className="images">
             {
-              itemImages.map((image) => (
+              itemImages.map((image, i) => (
                 <PreviewImage
+                  key={i}
                   preview={image.file.url}
                   src={image.fluid.src}
                   srcSet={image.fluid.srcSet}
@@ -103,6 +111,7 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
               ))
             }
           </div>
+          <ModelView src={contentfulPortfolioItem.model.file.url} />
         </ImageWrapper>
         <Description>
           <div>
@@ -117,8 +126,9 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
 
 export const query = graphql`
   query getPortfolioItem($slug: String!) {
-    contentfulPortfolioItem (slug: { eq: $slug }) {
+    contentfulPortfolioItem (id: { eq: $slug }) {
       id
+      contentful_id
       images {
         title
         description
@@ -136,11 +146,9 @@ export const query = graphql`
           content
         }
       }
-      slug
       title
       createdAt
       updatedAt
-      tags
       previewImage {
         title
         description
@@ -153,13 +161,12 @@ export const query = graphql`
           sizes
         }
       }
-      modelFile {
+      model {
         title
         description
         file {
           url
           fileName
-          contentType
         }
       }
     }

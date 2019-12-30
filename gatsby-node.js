@@ -10,8 +10,8 @@ exports.createPages = ({ graphql, actions }) => {
           allContentfulPortfolioItem {
             edges {
               node {
+                id
                 title
-                slug
               }
             }
           }
@@ -23,15 +23,16 @@ exports.createPages = ({ graphql, actions }) => {
         }
         
         const posts = result.data.allContentfulPortfolioItem.edges;
-        posts.forEach((post, index) => {
+        for (const post of posts) {
+          const slug = encodeURIComponent(post.node.title.toLowerCase().split(' ').join('-'));
           createPage({
-            path: `/portfolio/${post.node.slug}`,
+            path: `/portfolio/${slug}`,
             component: portfolioItemTemplate,
             context: {
-              slug: post.node.slug
+              slug: post.node.id
             }
           })
-        });
+        }
       })
     )
   });

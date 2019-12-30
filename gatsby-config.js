@@ -19,8 +19,8 @@ if (!spaceId || !accessToken) {
 
 module.exports = {
   siteMetadata: {
-    title: 'Aurelins website',
-    description: 'Oleksandra Vasylenko personal website'
+    title: 'Aurelins portfolio',
+    description: 'Oleksandra Vasylenko personal portfolio website'
   },
   plugins: [
     'gatsby-plugin-react-helmet',

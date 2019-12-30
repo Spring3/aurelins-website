@@ -119,6 +119,7 @@ const months = [
 
 export default ({ data }) => {
   const createdAt = new Date(data.createdAt);
+  const slug = encodeURIComponent(data.title.toLowerCase().split(' ').join('-'));
   return (
     <Card
       slides={!!data.slides}
@@ -130,12 +131,12 @@ export default ({ data }) => {
           <ImageSlider
             images={data.images}
             preview={data.previewImage}
-            slug={data.slug}
+            slug={slug}
           />
         ) 
         : (
           <Link
-            to={`/portfolio/${data.slug}`}
+            to={`/portfolio/${slug}`}
           >
             <CardImage
               preview={data.previewImage.file.url}
@@ -152,7 +153,7 @@ export default ({ data }) => {
       <div className="info">
         <h2>{data.title}</h2>
         <TagList>
-          {data.tags.map((tag, i) => (<li key={i}>{tag}</li>))}
+          {(data.tags || []).map((tag, i) => (<li key={i}>{tag}</li>))}
         </TagList>
       </div>
     </Card>
