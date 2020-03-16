@@ -1,15 +1,9 @@
-let contentfulConfig;
+require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV}`
+});
 
-try {
-  contentfulConfig = require('./.contentful.json');
-} catch (_) {}
-
-contentfulConfig = {
-  spaceId: process.env.CONTENTFUL_SPACE_ID || contentfulConfig.spaceId,
-  accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || contentfulConfig.accessToken
-};
-
-const { spaceId, accessToken } = contentfulConfig;
+const spaceId = process.env.CONTENTFUL_SPACE_ID;
+const accessToken = process.env.CONTENTFUL_DELIVERY_TOKEN;
 
 if (!spaceId || !accessToken) {
   throw new Error(
@@ -54,7 +48,10 @@ module.exports = {
     'gatsby-plugin-styled-components',
     {
       resolve: 'gatsby-source-contentful',
-      options: contentfulConfig
+      options: {
+        spaceId,
+        accessToken
+      }
     },
     'gatsby-plugin-netlify'
   ]

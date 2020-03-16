@@ -3,7 +3,6 @@ import { navigate } from 'gatsby';
 import styled, { css, keyframes } from 'styled-components';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import ArrowLeftIcon from 'mdi-react/ArrowLeftIcon';
-import { Transition } from 'react-transition-group';
 
 import CardImage from './CardImage';
 
@@ -30,7 +29,7 @@ const Button = styled.button`
 
   &:hover {
     svg {
-      fill: white;
+      fill: ${props => props.theme.textEmphasizeColor};
     }
   }
 `;

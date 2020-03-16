@@ -54,7 +54,7 @@ const PreviewImage = withImagePreload(styled.img`
 `);
 
 const Description = styled.div`
-  color: #AAA;
+  color: ${props => props.theme.textColor};
   grid-column: span 6;
   padding: 0rem 2rem 0rem 4rem;
 
@@ -81,12 +81,8 @@ const Description = styled.div`
 `;
 
 export default ({ data: { contentfulPortfolioItem = {} } }) => {
-  const { previewImage, images } = contentfulPortfolioItem;
-  const [itemImages, setImages] = useState([]);
-
-  useEffect(() => {
-    setImages([previewImage, ...images.filter(image => image.title !== previewImage.title)]);
-  }, []);
+  const { previewImage, images, withRendering } = contentfulPortfolioItem;
+  const itemImages = [previewImage, ...images.filter(image => image.title !== previewImage.title)];
 
   return (
     <MainLayout>
@@ -111,7 +107,7 @@ export default ({ data: { contentfulPortfolioItem = {} } }) => {
               ))
             }
           </div>
-          <ModelView src={contentfulPortfolioItem.model.file.url} />
+          { withRendering && <ModelView src={contentfulPortfolioItem.model.file.url} /> }
         </ImageWrapper>
         <Description>
           <div>
