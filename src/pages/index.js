@@ -12,9 +12,10 @@ const Filler = styled.div`
 `;
 
 export default ({ data }) => {
-  const { site = {}, allContentfulWallpaper = {} } = data;
-  const items = allContentfulWallpaper.edges || [];
-  const images = items.reduce((acc, { node }) => acc.concat(node.images), []);
+  const { site = {}, allContentfulBackgroundImages = {} } = data;
+  const items = allContentfulBackgroundImages.edges || [];
+  const images = items[0].node.images || [];
+
   return (
     <Layout>
       <OGP
@@ -37,7 +38,7 @@ export const query = graphql`
         description
       }
     }
-    allContentfulWallpaper {
+    allContentfulBackgroundImages {
       edges {
         node {
           images {

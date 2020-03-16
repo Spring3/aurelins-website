@@ -1,6 +1,6 @@
 import React, { Fragment, useState, useEffect, useRef } from 'react';
 import { Link, useStaticQuery, graphql } from 'gatsby';
-import styled, { css, createGlobalStyle } from 'styled-components';
+import styled, { ThemeProvider, css, createGlobalStyle } from 'styled-components';
 import InstagramIcon from 'mdi-react/InstagramIcon';
 import EmailOutlineIcon from 'mdi-react/EmailOutlineIcon';
 import MenuIcon from 'mdi-react/MenuIcon';
@@ -10,6 +10,7 @@ import { disableBodyScroll, enableBodyScroll, clearAllBodyScrollLocks } from 'bo
 
 import useWindowResize from '../hooks/useWindowResize';
 import Footer from '../components/Footer';
+import activeTheme from '../theme';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -34,12 +35,12 @@ const BurgerButton = animated(styled.button`
 `);
 
 const Header = animated(styled.header`
-  color: white;
+  color: ${props => props.theme.textEmphasizeColor};
   margin-top: 2rem;
   margin-bottom: 4rem;
 
   h4, h3 {
-    color: #AAA;
+    color: ${props => props.theme.textColor};
   }
 
   @media (max-width: 900px) {
@@ -49,7 +50,7 @@ const Header = animated(styled.header`
       cursor: pointer;
       a, a:active, a:focus, a:visited {
         text-decoration: none !important;
-        color: white !important;
+        color: ${props => props.theme.textEmphasizeColor} !important;
       }
     }
   }
@@ -67,12 +68,12 @@ const MenuList = animated(styled.ul`
     
     a, a:visited, a:active {
       transition: color .3s ease-in-out;
-      color: #AAA;
+      color: ${props => props.theme.textColor};
       text-decoration: none;
     }
 
     a:focus, a:hover, a.active {
-      color: white;
+      color: ${props => props.theme.textEmphasizeColor};
     }
   }
 
@@ -116,7 +117,7 @@ const DesktopSidebar = animated(styled.aside`
   display: flex;
   top: 0px;
   padding: 2rem 2rem;
-  background: rgba(20,20,20,.9);
+  background: ${props => props.theme.transparentGrey};
   
   flex-direction: column;
   height: calc(100vh - 4rem);
@@ -131,7 +132,7 @@ const MobileSidebar = styled.aside`
   top: 0px;
   z-index: 1;
   padding: 1rem 2rem;
-  background: rgba(20,20,20,.9);
+  background: ${props => props.theme.transparentGrey};
   box-sizing: border-box;
   width: 100%;
   position: fixed;
@@ -156,7 +157,7 @@ const MobileSidebarContent = animated(styled.div`
   }
 
   h4 {
-    color: #AAA;
+    color: ${props => props.theme.textColor};
   }
 `);
 
@@ -183,12 +184,12 @@ const useSidebarAnimation = (isSidebarOpen) => {
       width: isSidebarOpen
         ? 16 * 16
         : 0,
-      background: isSidebarOpen ? 'rgba(20,20,20,.9)' : 'rgba(20,20,20,.0)'
+      background: isSidebarOpen ? activeTheme.transparentGrey : 'rgba(20,20,20,.0)'
     },
     width: isSidebarOpen
       ? 16 * 16
       : 0,
-    background: isSidebarOpen ? 'rgba(20,20,20,.9)' : 'rgba(20,20,20,.0)',
+    background: isSidebarOpen ? activeTheme.transparentGrey : 'rgba(20,20,20,.0)',
     ref: animationRef
   });
   return [animationRef, props];
@@ -366,10 +367,10 @@ export default ({ children }) => {
     typeof window !== 'undefined' && window.sessionStorage.setItem('sidebar', !isOpen);
   }
 
-  const iconColor = 'white';
+  const iconColor = activeTheme.textEmphasizeColor;
 
   return (
-    <Fragment>
+    <ThemeProvider theme={activeTheme}>
       <GlobalStyle />
       {
         !isMobile && (
@@ -473,14 +474,6 @@ export default ({ children }) => {
                       Portfolio
                     </Link>
                   </li>
-                  <li onClick={onSidebarClick}>
-                    <Link
-                      to="/contact"
-                      activeClassName="active"
-                    >
-                      Contact
-                    </Link>
-                  </li>
                 </MenuList>
                 <SocialList style={mobileSidebarSocialAnimationProps}>
                   <li>
@@ -513,6 +506,6 @@ export default ({ children }) => {
         {children}
         <Footer />
       </Main>
-    </Fragment>
+    </ThemeProvider>
   );
 }

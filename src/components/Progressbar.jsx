@@ -14,7 +14,7 @@ const Progressbar = styled.div`
 `;
 
 const Progress = styled.span`
-  color: white;
+  color: ${props => props.theme.textEmphasizeColor};
   margin-top: 6px;
 `;
 
@@ -24,7 +24,7 @@ const Bar = styled.div.attrs(props => ({
   }
 }))`
   height: 2px;
-  background: white;
+  background: ${props => props.theme.textEmphasizeColor};
   position: absolute;
   top: 0px;
   left: 0px;
