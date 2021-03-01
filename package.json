@@ -49,6 +49,6 @@
     "request-promise": "^4.2.5",
     "request-promise-native": "^1.0.8",
     "styled-components": "^5.0.1",
-    "three": "^0.114.0"
+    "three": "^0.125.0"
   }
 }
